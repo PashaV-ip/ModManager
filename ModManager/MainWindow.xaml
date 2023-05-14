@@ -1,0 +1,303 @@
+﻿<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:ModManager"
+    xmlns:ViewModel="clr-namespace:ModManager.ViewModel" x:Class="ModManager.MainWindow"
+    mc:Ignorable="d"
+    WindowStyle="None" 
+    ResizeMode="CanMinimize"
+    WindowState="{Binding StateWindow}"
+    WindowStartupLocation="CenterScreen"
+    Title="MainWindow" Height="450" Width="800">
+    <Window.DataContext>
+        <ViewModel:MainMenuViewModel/>
+    </Window.DataContext>
+    <Window.Background>
+        <ImageBrush ImageSource="/Source/Images/BackgroundV1.jpg"/>
+    </Window.Background>
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Border Background="#FF101010" Opacity="0.8" MouseDown="Border_MouseDown"/>
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Name="btnOptions" Focusable="False"  Template="{DynamicResource ResourceKey=ControlButtons}" Content="" Command="{Binding OpenOptions}">
+                    <Button.Resources>
+                        <ImageSource x:Key="Img">/Source/Images/gear.png</ImageSource>
+                    </Button.Resources>
+                </Button>
+                <Button Name="btnMinimize" Focusable="False" Template="{DynamicResource ResourceKey=ControlButtons}" Content="" Command="{Binding MinimizeWindow}">
+                    <Button.Resources>
+                        <ImageSource x:Key="Img">/Source/Images/window minimize.png</ImageSource>
+                    </Button.Resources>
+                </Button>
+                <Button Name="btnClose" Focusable="False" Template="{DynamicResource ResourceKey=ControlButtons}" Content="" Command="{Binding CloseApplication}">
+                    <Button.Resources>
+                        <ImageSource x:Key="Img">/Source/Images/cross mark.png</ImageSource>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+            <Grid Grid.Row="1" Name="SlideMenuGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto">
+                        <!--<ColumnDefinition.Style>
+                            <Style TargetType="{x:Type ColumnDefinition}">
+                                <Style.Triggers>
+                                    <EventTrigger RoutedEvent="MouseEnter">
+                                        <EventTrigger.Actions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Duration="0:0:0.3" Storyboard.TargetProperty="Width" To="225"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger.Actions>
+                                    </EventTrigger>
+                                    <EventTrigger RoutedEvent="MouseLeave">
+                                        <EventTrigger.Actions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Duration="0:0:0.3" Storyboard.TargetProperty="Width" To="60"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger.Actions>
+                                    </EventTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ColumnDefinition.Style>-->
+                    </ColumnDefinition>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid Name="SlideMenu" Grid.Column="0" Width="60" Grid.Row="1" HorizontalAlignment="Left">
+                    <Grid.Style>
+                        <Style TargetType="{x:Type Grid}">
+                            <Style.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <EventTrigger.Actions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0:0:0.3" Storyboard.TargetProperty="Width" To="225"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger.Actions>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <EventTrigger.Actions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Duration="0:0:0.3" Storyboard.TargetProperty="Width" To="60"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger.Actions>
+                                </EventTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Border BorderThickness="1, 0, 1, 1" BorderBrush="#FF303031"/>
+                    <Border BorderThickness="0" Background="Black" Opacity="0.6"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="50"/>
+                        </Grid.RowDefinitions>
+                        <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Name="StackPanelSlideMenu" Height="auto" Orientation="Vertical" CanVerticallyScroll="True">
+                                <Button Template="{DynamicResource ResourceKey=SlideMenuButton}" Command="{Binding OpenBuildMods}" CommandParameter="TestButtonForTest" Content="Магия">
+                                    <Button.Resources>
+                                        <ImageSource x:Key="Img">/Source/Images/cross mark.png</ImageSource>
+                                    </Button.Resources>
+                                </Button>
+                            </StackPanel>
+                        </ScrollViewer>
+                        <Border Grid.Row="1" BorderThickness="0, 2, 0, 0" BorderBrush="#FF303031"/>
+                        <Border Grid.Row="1" BorderThickness="0, 1, 0, 0" BorderBrush="#474748"/>
+                        <Button Grid.Row="1" Command="{Binding CreateAssembler}" Name="btnCreateAssembly" VerticalAlignment="Center" Focusable="False" Click="btnOptions_Click" Template="{DynamicResource ResourceKey=AddButton}" Content="Создать">
+                        </Button>
+                        <Border Background="Black" Opacity="0.5" Grid.RowSpan="2" Visibility="{Binding ControlUpdateAssemblerVisible}"/>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Column="1" Margin="20" Visibility="{Binding AssemblerModlistInfoVisible}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.ColumnSpan="15" Grid.RowSpan="15" Background="Black" Opacity="0.6" Margin="-10" CornerRadius="15"/>
+                    <!--<Border Width="60" Height="60" Background="Transparent" BorderThickness="5" CornerRadius="10">
+                        <Border.BorderBrush>
+                            <LinearGradientBrush>
+                                <GradientStop Color="#FF80671E"/>
+                                <GradientStop Color="#FF80671E" Offset="1"/>
+                                <GradientStop Color="#FFAB8633" Offset="0.6"/>
+                                <GradientStop Color="#FFFFFBCE" Offset="0.55"/>
+                                <GradientStop Color="#FFAB8633" Offset="0.5"/>
+                                <GradientStop Color="#FFAB8633" Offset="0.3"/>
+                                <GradientStop Color="#FFFFFBCE" Offset="0.25"/>
+                                <GradientStop Color="#FFAB8633" Offset="0.2"/>
+                                <GradientStop Color="#FFAB8633" Offset="0.8"/>
+                                <GradientStop Color="#FFFFFBCE" Offset="0.75"/>
+                                <GradientStop Color="#FFAB8633" Offset="0.7"/>
+                            </LinearGradientBrush>
+                        </Border.BorderBrush>
+                        <Image Margin="5" Source="/Source/Images/gear.png" Stretch="Fill"/>
+                    </Border>-->
+                    <Button Name="btnImageAssembler" Focusable="False" Template="{DynamicResource ResourceKey=ImageTheButton}" Height="60" Width="60" Content="" Command="{Binding EditImageAssembler}">
+                        <Button.Resources>
+                            <ImageSource x:Key="Img">/Source/Images/gear.png</ImageSource>
+                        </Button.Resources>
+                    </Button>
+
+                    <TextBox Text="{Binding AssemblerName}" CaretBrush="#FFC7C7C7" IsReadOnly="{Binding CanEditNameAssembler}" BorderThickness="0" Background="Transparent" Foreground="#FFC7C7C7" FontSize="25" HorizontalAlignment="Center" Grid.Column="1" Grid.ColumnSpan="5" Margin="50,15"/>
+                    <ToggleButton Grid.Column="5" IsChecked="{Binding CanEditNameAssemblerSwitch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Name="btnEditNameAssembler" Focusable="true" HorizontalAlignment="Right"  Template="{DynamicResource ResourceKey=SwitchButton}" Margin="0,0,5,0" Height="40" Width="40">
+                        <!--Command="{Binding EditNameAssembler}"-->
+                        <ToggleButton.Resources>
+                            <ImageSource x:Key="Img">/Source/Images/pencil.png</ImageSource>
+                        </ToggleButton.Resources>
+                    </ToggleButton>
+                    <Border Visibility="{Binding ImportVisibleIndicatorOn}" Grid.Column="15" Height="10" Width="50" CornerRadius="5">
+                        <Border.Background>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#FFC3D4C5" Offset="0.321"/>
+                                <GradientStop Color="#FF1AAB2A" Offset="1"/>
+                                <GradientStop Color="#FF93FF9F" Offset="0.53"/>
+                            </RadialGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <Border Visibility="{Binding ImportVisibleIndicatorOff}" Grid.Column="15" Height="10" Width="50" CornerRadius="5">
+                        <Border.Background>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#FFD4C3C3" Offset="0.321"/>
+                                <GradientStop Color="#FFAB1A1A" Offset="1"/>
+                                <GradientStop Color="#FFFF9393" Offset="0.53"/>
+                            </RadialGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <ScrollViewer PanningDeceleration="1" PanningRatio="0.5" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="15" Grid.RowSpan="3" VerticalScrollBarVisibility="Hidden">
+                        <StackPanel Name="StackPanelModList">
+                            <Label FontSize="25" Margin="30,0" Foreground="#FFC7C7C7" Content="Test"/>
+
+                        </StackPanel>
+                    </ScrollViewer>
+                    <Grid Grid.Row="4" Grid.ColumnSpan="15" Visibility="{Binding ControlAssemblerVisible}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button Width="150" Margin="10, 0, 10, 0" Name="btnLoadAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Загрузить" Command="{Binding LoadAssembler}">
+
+                        </Button>
+                        <Button Width="150" Grid.Column="1" Margin="10, 0, 10, 0" Name="btnUnloadAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Выгрузить" Command="{Binding UnloadAssembler}">
+
+                        </Button>
+                        <Button Width="150" Grid.Column="5" Margin="10, 0, 10, 0" Name="btnOptionAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Настройки" Command="{Binding OptionAssembler}">
+
+                        </Button>
+                    </Grid>
+                    <Grid Grid.Row="4" Grid.ColumnSpan="15" Visibility="{Binding ControlUpdateAssemblerVisible}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button Width="150" Margin="10, 0, 10, 0" Name="btnSaveAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Сохранить" Command="{Binding SaveAssemblerOption}">
+
+                        </Button>
+                        <Button Width="150" Grid.Column="1" Margin="10, 0, 10, 0" Name="btnCancleAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Отменить" Command="{Binding Test}">
+
+                        </Button>
+                        <Button Width="150"  Grid.Column="5" Margin="10, 0, 10, 0" Name="btnDeleteAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Удалить" Command="{Binding DeleteAssembler}">
+
+                        </Button>
+                        
+                    </Grid>
+                </Grid>
+            </Grid>
+            <Grid Grid.Row="1" Visibility="{Binding OptionsVisible}">
+
+                <Border Background="#FF101010" Opacity="0.6" Width="60" HorizontalAlignment="Left"/>
+                <Border Background="#FF101010" Opacity="0.5"/>
+                <Grid Margin="35,10,35,10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.RowSpan="10" BorderThickness="2" BorderBrush="#FF303031" Grid.ColumnSpan="10" CornerRadius="20">
+                        <Border Grid.RowSpan="10" BorderThickness="1" BorderBrush="#474748" Grid.ColumnSpan="10" CornerRadius="20"/>
+                        <Border.Background>
+                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                <GradientStop Color="#FF232D3E"/>
+                                <GradientStop Color="#FF1D222C" Offset="1"/>
+                                <GradientStop Color="#FF1D202C" Offset="0.5"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <Grid HorizontalAlignment="Center" Grid.Row="0" Grid.ColumnSpan="15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Label Foreground="#FFC7C7C7" Content="Папка Mods: " FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" CaretBrush="#FFC7C7C7" Text="{Binding PathToTheModsFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="10,0,10,0" Width="300" VerticalAlignment="Center" FontSize="20">
+                            <TextBox.Background>
+                                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                    <GradientStop Color="#FF1E2531"/>
+                                    <GradientStop Color="#FF16191F" Offset="1"/>
+                                    <GradientStop Color="#FF1E212B" Offset="0.5"/>
+                                </LinearGradientBrush>
+                            </TextBox.Background>
+                        </TextBox>
+                        <Button Grid.Column="2" Margin="10, 0, 0, 0" Name="btnBrowseMods" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Обзор ..." Command="{Binding BrowseModsFolder}">
+
+                        </Button>
+                    </Grid>
+
+                    <Grid HorizontalAlignment="Center" Grid.Row="1" Grid.ColumnSpan="15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Label Foreground="#FFC7C7C7" Content="Папка ссборок: " FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" CaretBrush="#FFC7C7C7" Text="{Binding PathToTheAssemblersFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="10,0,10,0" Width="300" VerticalAlignment="Center" FontSize="20">
+                            <TextBox.Background>
+                                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                    <GradientStop Color="#FF1E2531"/>
+                                    <GradientStop Color="#FF16191F" Offset="1"/>
+                                    <GradientStop Color="#FF1E212B" Offset="0.5"/>
+                                </LinearGradientBrush>
+                            </TextBox.Background>
+                        </TextBox>
+                        <Button Grid.Column="2" Margin="10, 0, 0, 0" Name="btnBrowseAssemblers" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Обзор ..." Command="{Binding BrowseAssemblersFolder}">
+
+                        </Button>
+                    </Grid>
+                    <StackPanel Margin="0, 0, 0, 20" HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="15" Orientation="Horizontal">
+                        <Button Width="150" Grid.Row="1" Margin="10, 0, 50, 0" Name="btnOptionSave" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Сохранить" Command="{Binding SaveOptions}">
+
+                        </Button>
+                        <Button Width="150" Grid.Row="1" Margin="50, 0, 10, 0" Name="btnOptionCancle" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Отмена" Command="{Binding CancleOptions}">
+
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

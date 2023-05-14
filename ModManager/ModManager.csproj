@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>True</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Source\Images\BackgroundV1.jpg" />
+    <None Remove="Source\Images\cross mark.png" />
+    <None Remove="Source\Images\gear.png" />
+    <None Remove="Source\Images\img.png" />
+    <None Remove="Source\Images\pencil.png" />
+    <None Remove="Source\Images\window minimize.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="View\" />
+    <Folder Include="Configs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MvvmLightLibs" Version="5.4.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Source\Images\BackgroundV1.jpg" />
+    <Resource Include="Source\Images\cross mark.png" />
+    <Resource Include="Source\Images\gear.png" />
+    <Resource Include="Source\Images\img.png" />
+    <Resource Include="Source\Images\pencil.png" />
+    <Resource Include="Source\Images\window minimize.png" />
+  </ItemGroup>
+
+</Project>
