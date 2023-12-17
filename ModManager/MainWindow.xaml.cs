@@ -30,46 +30,11 @@ namespace ModManager
         public MainWindow()
         {
             InitializeComponent();
-            StackPanelSlideMenu.Children.Add(new System.Windows.Controls.Button
-            {
-                Template = (ControlTemplate)System.Windows.Application.Current.Resources["SlideMenuButton"],
-                Content = "Test1",
-                FontSize = 15,
-                Command = (this.DataContext as MainMenuViewModel)?.OpenAssembler,
-                Resources = {
-                    { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/gear.png", UriKind.Absolute))}
-                }
-            });
             (DataContext as MainMenuViewModel).StackPanelSlideMenu = this.StackPanelSlideMenu;
             (DataContext as MainMenuViewModel).StackPanelModList = this.StackPanelModList;
             (DataContext as MainMenuViewModel).AssemblerImageButton = this.btnImageAssembler;
-            //(DataContext as MainMenuViewModel).GetAssemblers( StackPanelSlideMenu);
-            //AddAssemblers();
+            (DataContext as MainMenuViewModel).StackPanelGameList = this.StackPanelGameList;
         }
-
-        private void btnOptions_Click(object sender, RoutedEventArgs e)
-        {
-            
-        }
-
-        private void AddAssemblers()
-        {
-            foreach(string str in Directory.GetDirectories(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder")))
-            {
-                DirectoryInfo directory = new DirectoryInfo(str);
-                StackPanelSlideMenu.Children.Add(new System.Windows.Controls.Button
-                {
-                    Template = (ControlTemplate)System.Windows.Application.Current.Resources["SlideMenuButton"],
-                    Content = directory.Name,
-                    Command = (this.DataContext as MainMenuViewModel)?.OpenAssembler,
-                    CommandParameter = "Button1",
-                    Resources = {
-                    { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/gear.png", UriKind.Absolute))}
-                }
-                });
-            }
-        }
-
         private void Border_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)

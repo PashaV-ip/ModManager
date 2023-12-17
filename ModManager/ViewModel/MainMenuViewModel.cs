@@ -22,26 +22,36 @@ namespace ModManager.ViewModel
     public class MainMenuViewModel : BaseViewModel
     {
         #region Поля
-        private WindowState _stateWindow = WindowState.Normal;
-        private FileSystemWatcher _watcher = new FileSystemWatcher();
+        private WindowState _stateWindow = WindowState.Normal; //Состояние окна
+        private FileSystemWatcher _watcher = new FileSystemWatcher(); //Просматривает папку
         private bool _newAssembler = false;
 
         #region Поля видимости различных элементов
-        private Visibility _optionsVisible = Visibility.Hidden;
+        private Visibility _optionsVisible = Visibility.Visible;
         private Visibility _importVisibleIndicatorOn;
         private Visibility _importVisibleIndicatorOff;
         private Visibility _assemblerModlistInfoVisible = Visibility.Visible;
         private Visibility _controlsAssemblerVisible = Visibility.Visible;
         #endregion
-        private bool _canEditNameAssembler = true; // Поля отвечающее на вопрос - можно ли редактировать название сборки (Переключается карандашиком)
+
+        private bool _canEditNameAssembler = true; // Поле отвечающее на вопрос - можно ли редактировать название сборки (Переключается карандашиком)
         private string _assemblerName = ""; // Поле - название сборки (Необходимо для отображения шапки)
         private string _pathToTheModsFolder = ""; //Хранит путь до папки mods у игры
         private string _pathToTheAssemblersFolder = ""; //Хранит путь до папки, куда будут сохранятся сборки;
         private System.Windows.Controls.Button _assemblerImageButton; //ImageButton отображает иконку сборки и позволяет её менять;
         private StackPanel _stackPanelSlideMenu; // Боковое меню
         private StackPanel _stackPanelModList; //Список модов
+        private StackPanel _stackPanelGameList;
         #endregion
         #region Свойства
+        public StackPanel StackPanelGameList
+        {
+            get => _stackPanelGameList;
+            set
+            {
+                _stackPanelGameList = value;
+            }
+        }
         public StackPanel StackPanelModList //Свойство взаимодействующее с полем _stackPanelModList
         {
             get => _stackPanelModList;
@@ -271,7 +281,132 @@ namespace ModManager.ViewModel
                 });
             }
         }
-        
+        public ICommand AddGame
+        {
+            get
+            {
+                return new RelayCommand(() =>{
+                    Grid grid = new Grid
+                    {
+                        Margin = new Thickness(20, 10, 5, 0)
+                    };
+                    grid.ColumnDefinitions.Add(new ColumnDefinition
+                    {
+                        Width = new GridLength(200)
+                    });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition
+                    {
+
+                    });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition
+                    {
+                        Width = new GridLength(150)
+                    });
+                    System.Windows.Controls.TextBox textBoxGameName = new System.Windows.Controls.TextBox
+                    {
+                        Name = "TextBoxGameName",
+                        TextAlignment = TextAlignment.Center,
+                        Text = "TestGameName",
+                        Style = (Style)System.Windows.Application.Current.Resources["TextBoxStyle"],
+                        Margin = new Thickness(10, 0, 10, 0),
+                        Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
+                        CaretBrush = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
+                        Padding = new Thickness(0, 5, 0, 5),
+                        MinWidth = 105,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FontSize = 20
+                    };
+                    Grid.SetColumn(textBoxGameName, 0);
+                    System.Windows.Controls.TextBox textBoxFolderPath = new System.Windows.Controls.TextBox
+                    {
+                        Name = "TextBoxFolderPath",
+                        TextAlignment = TextAlignment.Center,
+                        Text = "TestGamePath",
+                        Style = (Style)System.Windows.Application.Current.Resources["TextBoxStyle"],
+                        Margin = new Thickness(10, 0, 10, 0),
+                        Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
+                        CaretBrush = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
+                        Padding = new Thickness(0, 5, 0, 5),
+                        MinWidth = 105,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FontSize = 20
+                    };
+                    Grid.SetColumn(textBoxFolderPath, 1);
+
+
+                    //-------------------------------------------------------------------------------------------------------------
+                    System.Windows.Controls.StackPanel stackPanelControlButtonForGame = new System.Windows.Controls.StackPanel
+                    {
+                        Orientation = System.Windows.Controls.Orientation.Horizontal,
+                        HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                        Margin = new Thickness(0, 3, 0, 3)
+                    };
+                    Grid.SetColumn(stackPanelControlButtonForGame, 2);
+
+                    System.Windows.Controls.Button buttonBrowseFolderForGame = new System.Windows.Controls.Button
+                    {
+                        Width = 30,
+                        Height = 30,
+                        Focusable = false,
+                        Margin = new Thickness(5, 0, 0, 0),
+                        Template = (ControlTemplate)System.Windows.Application.Current.Resources["SmallImageButton"],
+                        Resources = {
+                            { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/folder.png", UriKind.Absolute))},
+                        }
+                    };
+                    System.Windows.Controls.Button buttonDeleteGame = new System.Windows.Controls.Button
+                    {
+                        Width = 30,
+                        Height = 30,
+                        Focusable = false,
+                        Margin = new Thickness(10, 0, 0, 0),
+                        Template = (ControlTemplate)System.Windows.Application.Current.Resources["SmallImageButton"],
+                        Resources = {
+                            { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/delete.png", UriKind.Absolute))},
+                        },
+                        Command = new RelayCommand(() =>
+                        {
+                            /*IniFile ini = new IniFile("../../../Configs/Test.ini");
+                            ini.Write("TestKey", "TestValue", "TestSection");
+                            ini.Write("TestKey", "TestValue", "TestSection2");
+                            ini.Write("TestKey2", "TestValue");
+                            ini.Write("TestKey", "TestValue2");*/
+                        })
+                    };
+                    System.Windows.Controls.Button buttonCheckSaveGame = new System.Windows.Controls.Button
+                    {
+                        Width = 30,
+                        Height = 30,
+                        Focusable = false,
+                        Margin = new Thickness(10, 0, 0, 0),
+                        Template = (ControlTemplate)System.Windows.Application.Current.Resources["SmallImageButton"],
+                        Resources = {
+                            { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/check.png", UriKind.Absolute))},
+                        },
+                        Command = new RelayCommand(() =>
+                        {
+                            IniFile ini = new IniFile("../../../Configs/Test.ini");
+                            ini.Write("Test", "Test", "TestGameSection");
+                            /*ini.Write(textBoxGameName.Text, textBoxFolderPath.Text, "TestGameSection");*/
+                            //System.Windows.MessageBox.Show( + " " + textBoxFolderPath.Text, "Добавлено");
+                        })
+                    };
+
+                    stackPanelControlButtonForGame.Children.Add(buttonBrowseFolderForGame);
+                    stackPanelControlButtonForGame.Children.Add(buttonDeleteGame);
+                    stackPanelControlButtonForGame.Children.Add(buttonCheckSaveGame);
+                    //-------------------------------------------------------------------------------------------------------------
+
+                    grid.Children.Add(textBoxGameName);
+                    grid.Children.Add(textBoxFolderPath);
+                    grid.Children.Add(stackPanelControlButtonForGame);
+                    StackPanelGameList.Children.Add(grid);
+
+                });
+            }
+        }
+
+
         public ICommand CancleOptions
         {
             get
@@ -572,8 +707,7 @@ namespace ModManager.ViewModel
             {
                 System.Windows.MessageBox.Show("Не соответствует");
             }*/
-                
-        }
+    }
         private void StreamReadDirectory(string path)
         {
             var watcher = new FileSystemWatcher();
@@ -618,8 +752,8 @@ namespace ModManager.ViewModel
             ini.Write("PathToTheAssemblersFolder", "");
             ini.Write("NumberOfAssembler", "1");
             ini.Write("SelectedAssembler", "");
+
         }
         #endregion
-
     }
 }
