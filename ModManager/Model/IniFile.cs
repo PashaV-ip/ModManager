@@ -19,6 +19,8 @@ namespace ModManager.Model
 
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
         static extern int GetPrivateProfileString(string Section, string Key, string Default, StringBuilder RetVal, int Size, string FilePath);
+        [DllImport("kernel32", CharSet = CharSet.Unicode)]
+        static extern int GetPrivateProfileString(string Section, string Key, string Default, IntPtr RetVal, int Size, string FilePath);
 
         public IniFile(string IniPath = null)
         {
@@ -30,6 +32,27 @@ namespace ModManager.Model
             var RetVal = new StringBuilder(255);
             GetPrivateProfileString(Section ?? EXE, Key, "", RetVal, 255, Path);
             return RetVal.ToString();
+        }
+        /*public string[] GetKeys(string Section = null)
+        {
+            int bufferSize = 1024;
+            StringBuilder buffer = new StringBuilder(bufferSize);
+            int keysCount = GetPrivateProfileString(Section ?? EXE, null, null, buffer, bufferSize, Path);
+            string[] keys = buffer.ToString().Split('\0');
+            return keys;
+        }*/
+        public string[] GetKeys(string Section = null)
+        {
+            IntPtr pMem = Marshal.AllocHGlobal(4096 * sizeof(char));
+            string temp = "";
+
+            int count = GetPrivateProfileString(Section ?? EXE, null, null, pMem, 4096 * sizeof(char), Path) - 1;
+            if (count > 0)
+                temp = Marshal.PtrToStringUni(pMem, count);
+
+            Marshal.FreeHGlobal(pMem);
+
+            return temp.Split('\0');
         }
 
         public void Write(string Key, string Value, string Section = null)
