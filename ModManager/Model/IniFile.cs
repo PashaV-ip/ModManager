@@ -33,14 +33,6 @@ namespace ModManager.Model
             GetPrivateProfileString(Section ?? EXE, Key, "", RetVal, 255, Path);
             return RetVal.ToString();
         }
-        /*public string[] GetKeys(string Section = null)
-        {
-            int bufferSize = 1024;
-            StringBuilder buffer = new StringBuilder(bufferSize);
-            int keysCount = GetPrivateProfileString(Section ?? EXE, null, null, buffer, bufferSize, Path);
-            string[] keys = buffer.ToString().Split('\0');
-            return keys;
-        }*/
         public string[] GetKeys(string Section = null)
         {
             IntPtr pMem = Marshal.AllocHGlobal(4096 * sizeof(char));

@@ -8,19 +8,23 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using GalaSoft.MvvmLight.Command;
+using ModManager.ViewModel;
+using System.Windows.Forms;
+using System.IO;
 
 namespace ModManager.Model
 {
     public class GameInfo
     {
         private Grid _gridLine;
-        private TextBox _textBoxGameName;
-        private TextBox _textBoxGamePath;
+        private System.Windows.Controls.TextBox _textBoxGameName;
+        private System.Windows.Controls.TextBox _textBoxGamePath;
         private StackPanel _stackPanelControlButtonsForGame;
-        private Button _buttonBrowseFolderForGame;
-        private Button _buttonDeleteGame;
-        private Button _buttonCheckSaveGame;
+        private System.Windows.Controls.Button _buttonBrowseFolderForGame;
+        private System.Windows.Controls.Button _buttonDeleteGame;
+        private System.Windows.Controls.Button _buttonCheckSaveGame;
 
+        private MainMenuViewModel.DeleteGame _deleteGame;
         public Grid GridLine
         {
             get => _gridLine;
@@ -29,7 +33,7 @@ namespace ModManager.Model
                 _gridLine = value;
             }
         }
-        public TextBox TextBoxGameName
+        public System.Windows.Controls.TextBox TextBoxGameName
         {
             get => _textBoxGameName;
             set
@@ -37,7 +41,7 @@ namespace ModManager.Model
                 _textBoxGameName = value;
             }
         }
-        public TextBox TextBoxGamePath
+        public System.Windows.Controls.TextBox TextBoxGamePath
         {
             get => _textBoxGamePath; 
             set
@@ -53,7 +57,7 @@ namespace ModManager.Model
                 _stackPanelControlButtonsForGame = value;
             }
         }
-        public Button ButtonBrowseFolderForGame
+        public System.Windows.Controls.Button ButtonBrowseFolderForGame
         {
             get => _buttonBrowseFolderForGame; 
             set
@@ -61,7 +65,7 @@ namespace ModManager.Model
                 _buttonBrowseFolderForGame = value;
             }
         }
-        public Button ButtonDeleteGame
+        public System.Windows.Controls.Button ButtonDeleteGame
         {
             get => _buttonDeleteGame; 
             set
@@ -69,7 +73,7 @@ namespace ModManager.Model
                 _buttonDeleteGame = value;
             }
         }
-        public Button ButtonCheckSaveGame
+        public System.Windows.Controls.Button ButtonCheckSaveGame
         {
             get => _buttonCheckSaveGame; 
             set
@@ -77,8 +81,13 @@ namespace ModManager.Model
                 _buttonCheckSaveGame = value;
             }
         }
-        public GameInfo()
+
+        
+
+
+        public GameInfo(MainMenuViewModel.DeleteGame delete)
         {
+            _deleteGame = delete;
             GridLine = new Grid
             {
                 Margin = new Thickness(20, 10, 5, 0)
@@ -145,7 +154,16 @@ namespace ModManager.Model
                 Template = (ControlTemplate)System.Windows.Application.Current.Resources["SmallImageButton"],
                 Resources = {
                             { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/folder.png", UriKind.Absolute))},
-                        }
+                        },
+                Command = new RelayCommand(() =>
+                {
+                    var dialog = new FolderBrowserDialog();
+                    DialogResult result = dialog.ShowDialog();
+                    if (result == System.Windows.Forms.DialogResult.OK)
+                    {
+                        TextBoxGamePath.Text = dialog.SelectedPath;
+                    }
+                })
             };
             ButtonDeleteGame = new System.Windows.Controls.Button
             {
@@ -159,7 +177,10 @@ namespace ModManager.Model
                         },
                 Command = new RelayCommand(() =>
                 {
-
+                    IniFile ini = new IniFile("../../../Configs/Settings.ini");
+                    if (ini.KeyExists(TextBoxGameName.Text, "TestGameSection"))
+                        ini.DeleteKey(TextBoxGameName.Text, "TestGameSection");
+                    _deleteGame(GridLine, TextBoxGameName.Text);
                 })
             };
             ButtonCheckSaveGame = new System.Windows.Controls.Button
@@ -180,18 +201,22 @@ namespace ModManager.Model
                         TextBoxGamePath.IsReadOnly = false;
                         ButtonCheckSaveGame.Resources.Remove("Img");
                         ButtonCheckSaveGame.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/check.png", UriKind.Absolute)));
-                        System.Windows.MessageBox.Show("Нажми галочку для сохранения");
                     }
                     else
                     {
-                        TextBoxGameName.IsReadOnly = true;
-                        TextBoxGamePath.IsReadOnly = true;
-                        IniFile ini = new IniFile("../../../Configs/Test.ini");
-                        ini.Write(TextBoxGameName.Text, TextBoxGamePath.Text, "TestGameSection");
-                        System.Windows.MessageBox.Show(TextBoxGameName.Text + " " + TextBoxGamePath.Text, "Добавлено в секцию TestGameSection");
-                        ButtonCheckSaveGame.Resources.Remove("Img");
-                        ButtonCheckSaveGame.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/pencil.png", UriKind.Absolute)));
-                        System.Windows.MessageBox.Show("Нажми карандашь что бы изменить пути и игру");
+                        if (TextBoxGameName.Text != "" && TextBoxGamePath.Text != "")
+                        {
+                            TextBoxGameName.IsReadOnly = true;
+                            TextBoxGamePath.IsReadOnly = true;
+                            IniFile ini = new IniFile("../../../Configs/Settings.ini");
+                            ini.Write(TextBoxGameName.Text, TextBoxGamePath.Text, "TestGameSection");
+                            ButtonCheckSaveGame.Resources.Remove("Img");
+                            ButtonCheckSaveGame.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/pencil.png", UriKind.Absolute)));
+                        }
+                        else
+                        {
+                            System.Windows.MessageBox.Show("Поля \"Игра\" и \"Путь\" \nНе могут быть пустыми!", "Ошибка...", MessageBoxButton.OK, MessageBoxImage.Stop);
+                        }
                     }
                 })
             };
@@ -205,10 +230,11 @@ namespace ModManager.Model
             GridLine.Children.Add(StackPanelControlButtonsForGame);
         }
 
+        
 
-
-        public GameInfo(string GameName, string GamePath)
+        public GameInfo(string GameName, string GamePath, MainMenuViewModel.DeleteGame delete)
         {
+            _deleteGame = delete;
             GridLine = new Grid
             {
                 Margin = new Thickness(20, 10, 5, 0)
@@ -277,7 +303,16 @@ namespace ModManager.Model
                 Template = (ControlTemplate)System.Windows.Application.Current.Resources["SmallImageButton"],
                 Resources = {
                             { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/folder.png", UriKind.Absolute))},
-                }
+                },
+                Command = new RelayCommand(() =>
+                {
+                    var dialog = new FolderBrowserDialog();
+                    DialogResult result = dialog.ShowDialog();
+                    if (result == System.Windows.Forms.DialogResult.OK)
+                    {
+                        TextBoxGamePath.Text = dialog.SelectedPath;
+                    }
+                })
             };
             ButtonDeleteGame = new System.Windows.Controls.Button
             {
@@ -291,7 +326,10 @@ namespace ModManager.Model
                 },
                 Command = new RelayCommand(() =>
                 {
-                    GridLine = new Grid();
+                    IniFile ini = new IniFile("../../../Configs/Settings.ini");
+                    if (ini.KeyExists(TextBoxGameName.Text, "TestGameSection"))
+                        ini.DeleteKey(TextBoxGameName.Text, "TestGameSection");
+                    _deleteGame(GridLine, TextBoxGameName.Text); //Через делегат реализовал функцию удаления игры из ini файла и в StackPanel
                 })
             };
             ButtonCheckSaveGame = new System.Windows.Controls.Button
@@ -315,13 +353,19 @@ namespace ModManager.Model
                     }
                     else
                     {
-                        TextBoxGameName.IsReadOnly = true;
-                        TextBoxGamePath.IsReadOnly = true;
-                        IniFile ini = new IniFile("../../../Configs/Test.ini");
-                        ini.Write(TextBoxGameName.Text, TextBoxGamePath.Text, "TestGameSection");
-                        System.Windows.MessageBox.Show(TextBoxGameName.Text + " " + TextBoxGamePath.Text, "Добавлено в секцию TestGameSection");
-                        ButtonCheckSaveGame.Resources.Remove("Img");
-                        ButtonCheckSaveGame.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/pencil.png", UriKind.Absolute)));
+                        if (TextBoxGameName.Text != "" && TextBoxGamePath.Text != "")
+                        {
+                            TextBoxGameName.IsReadOnly = true;
+                            TextBoxGamePath.IsReadOnly = true;
+                            IniFile ini = new IniFile("../../../Configs/Settings.ini");
+                            ini.Write(TextBoxGameName.Text, TextBoxGamePath.Text, "TestGameSection");
+                            ButtonCheckSaveGame.Resources.Remove("Img");
+                            ButtonCheckSaveGame.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/pencil.png", UriKind.Absolute)));
+                        }
+                        else
+                        {
+                            System.Windows.MessageBox.Show("Поля \"Игра\" и \"Путь\" \nНе могут быть пустыми!", "Ошибка...", MessageBoxButton.OK, MessageBoxImage.Stop);
+                        }
                     }
                 })
             };

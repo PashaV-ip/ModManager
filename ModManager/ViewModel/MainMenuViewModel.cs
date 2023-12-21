@@ -1,16 +1,9 @@
 ﻿using GalaSoft.MvvmLight.Command;
 using ModManager.Model;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -292,19 +285,7 @@ namespace ModManager.ViewModel
                         IniFile ini = new IniFile("../../../Configs/Settings.ini");
                         PathToTheModsFolder = ini.Read("PathToTheModsFolder");
                         PathToTheAssemblersFolder = ini.Read("PathToTheAssemblersFolder");
-
-
-
-                        IniFile ini2 = new IniFile("../../../Configs/Test.ini");
-                        foreach (var key in ini2.GetKeys("TestGameSection")) //Закончил на получении списка ключей из секции в ini файле (Необходимо для загрузки списка игр)
-                        {
-                            if (!string.IsNullOrEmpty(key))
-                            {
-                                string path = ini2.Read(key, "TestGameSection");
-                                AddGameToList(key, path);
-                            }
-                        }
-                        
+                        RedrawingGameListMethod();
                     }
                     else
                     {
@@ -324,8 +305,6 @@ namespace ModManager.ViewModel
             get
             {
                 return new RelayCommand(() =>{
-                    /*GameInfoList.Add(new GameInfo());
-                    StackPanelGameList.Children.Add(GameInfoList[GameInfoList.ToArray().Length-1].GridLine);*/
                     AddGameToList();
                 });
             }
@@ -397,20 +376,8 @@ namespace ModManager.ViewModel
                             });
                     }
                     _newAssembler = true;
-                    _watcher.Path = new IniFile("../../../Configs/Settings.ini").Read("PathToTheModsFolder");
-
-                    _watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-                    _watcher.Filter = "*.jar"; // Здесь указывается фильтр файлов, которые нужно отслеживать (в данном случае все файлы)
-                    _watcher.Changed += OnChanged;
-                    _watcher.Created += OnChanged;
-                    _watcher.Deleted += OnChanged;
-                    _watcher.Renamed += OnChanged;
-                    _watcher.EnableRaisingEvents = true;
-
-
-                    //if (_controlsAssemblerVisible == Visibility.Visible)
+                    StreamReadDirectory();
                     ControlAssemblerVisibility = Visibility.Hidden;
-                    //else ControlAssemblerVisibility = Visibility.Visible;
                 });
             }
         }
@@ -542,13 +509,13 @@ namespace ModManager.ViewModel
         #endregion
 
         #region Методы
-        public void ClearAssemblersList()
+        public void ClearAssemblersList() => StackPanelSlideMenu.Children.Clear();
+
+        public void ClearModsList() => StackPanelModList.Children.Clear();
+        private void ClearGameList()
         {
-            StackPanelSlideMenu.Children.Clear();
-        }
-        public void ClearModsList()
-        {
-            StackPanelModList.Children.Clear();
+            StackPanelGameList.Children.Clear();
+            GameInfoList.Clear();
         }
 
         public void GetAssemblers()
@@ -566,8 +533,10 @@ namespace ModManager.ViewModel
             {
                 return;
             }
-            foreach (string str in Directory.GetDirectories(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder")))
+            #region oldVersionForeach
+            /*foreach (string str in Directory.GetDirectories(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder")))
             {
+                
                 DirectoryInfo directory = new DirectoryInfo(str);
                 System.Windows.Controls.Button button = new System.Windows.Controls.Button
                 {
@@ -575,9 +544,9 @@ namespace ModManager.ViewModel
                     Content = directory.Name,
                     Command = OpenAssembler,
                     CommandParameter = directory.Name,
-                    Resources = {
-                        { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute))},
-                    }
+                    //Resources = {
+                    //    { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute))},
+                    //}
                 };
                 if (File.Exists(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(directory.Name, Path.Combine("Assets", "img.png")))))
                 {
@@ -590,8 +559,79 @@ namespace ModManager.ViewModel
                     button.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute)));
                 }
                 StackPanelSlideMenu.Children.Add(button);
+            }*/
+            #endregion
+            /*DirectoryInfo directoryWithInfo = new DirectoryInfo(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"));
+            foreach (var str in directoryWithInfo.GetDirectories().OrderBy(d => d.CreationTime))
+            {
+
+                DirectoryInfo directory = str;
+                System.Windows.Controls.Button button = new System.Windows.Controls.Button
+                {
+                    Template = (ControlTemplate)System.Windows.Application.Current.Resources["SlideMenuButton"],
+                    Content = directory.Name,
+                    Command = OpenAssembler,
+                    CommandParameter = directory.Name,
+                    //Resources = {
+                    //    { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute))},
+                    //}
+                };
+                if (File.Exists(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(directory.Name, Path.Combine("Assets", "img.png")))))
+                {
+                    button.Resources.Remove("Img");
+                    button.Resources.Add("Img", new BitmapImage(new Uri(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(directory.Name, Path.Combine("Assets", "img.png"))), UriKind.Absolute)));
+                }
+                else
+                {
+                    button.Resources.Remove("Img");
+                    button.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute)));
+                }
+                StackPanelSlideMenu.Children.Add(button);
+            }*/
+
+
+
+            DirectoryInfo directoryWithInfo = new DirectoryInfo(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"));
+            foreach (var str in directoryWithInfo.GetDirectories().OrderBy(d => d.CreationTime))
+            {
+                if(new IniFile("../../../Configs/Settings.ini").KeyExists(str.Name, "TestGameSection"))
+                {
+                    System.Windows.Controls.TextBlock textBlock = new System.Windows.Controls.TextBlock
+                    {
+                        Text = str.Name,
+                        FontSize = 20,
+                        Margin = new Thickness(30, 0, 30, 0),
+                        HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                        VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                        Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7")
+                        
+                    };
+                    StackPanelSlideMenu.Children.Add(textBlock);
+                    foreach (var gameDirectWithAssemblers in str.GetDirectories().OrderBy(d => d.CreationTime))
+                    {
+                        System.Windows.Controls.Button button = new System.Windows.Controls.Button
+                        {
+                            Template = (ControlTemplate)System.Windows.Application.Current.Resources["SlideMenuButton"],
+                            Content = gameDirectWithAssemblers.Name,
+                            Command = OpenAssembler,
+                            CommandParameter = Path.Combine(str.Name, gameDirectWithAssemblers.Name), //Было просто gameDirectWithAssemblers.Name
+                        };
+                        if (File.Exists(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(gameDirectWithAssemblers.Name, Path.Combine("Assets", "img.png")))))
+                        {
+                            button.Resources.Remove("Img");
+                            button.Resources.Add("Img", new BitmapImage(new Uri(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(gameDirectWithAssemblers.Name, Path.Combine("Assets", "img.png"))), UriKind.Absolute)));
+                        }
+                        else
+                        {
+                            button.Resources.Remove("Img");
+                            button.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute)));
+                        }
+                        StackPanelSlideMenu.Children.Add(button);
+                    }
+                }
+                
             }
-            
+
         }
         public void GetInformationInSelectedAssembler(string? assembler)
         {
@@ -607,7 +647,8 @@ namespace ModManager.ViewModel
             }
             
 
-            AssemblerName = assembler;
+            AssemblerName = assembler; //assembler теперь содержит в пути Название игры, к которой относится сборка из-за чего при выборе сборки там перед названием казано
+                                       //название игры, нужно исправить!!!!
             if (StackPanelModList.Children.Count > 0)
             {
                 StackPanelModList.Children.Clear();
@@ -624,32 +665,19 @@ namespace ModManager.ViewModel
                     Content = new FileInfo(str).Name
                 });
             }
-            /*foreach ()
-            if(Directory.GetFiles(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), AssemblerName), "*.jar") == Directory.GetFiles(new IniFile("../../../Configs/Settings.ini").Read("PathToTheModsFolder"), "*.jar"))
-            {
-                System.Windows.MessageBox.Show("Соответствует");
-            }
-            else
-            {
-                System.Windows.MessageBox.Show("Не соответствует");
-            }*/
-    }
-        private void StreamReadDirectory(string path)
+
+        }
+        private void StreamReadDirectory()
         {
-            var watcher = new FileSystemWatcher();
-            watcher.Path = @"C:\MyFolder"; // Здесь указывается путь к папке, которую нужно отслеживать
-            watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            watcher.Filter = "*.*"; // Здесь указывается фильтр файлов, которые нужно отслеживать (в данном случае все файлы)
+            _watcher.Path = new IniFile("../../../Configs/Settings.ini").Read("PathToTheModsFolder");
 
-            watcher.Changed += OnChanged;
-            watcher.Created += OnChanged;
-            watcher.Deleted += OnChanged;
-            watcher.Renamed += OnChanged;
-            
-
-            watcher.EnableRaisingEvents = true; // Запуск отслеживания
-
-            
+            _watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+            _watcher.Filter = "*.*"; // Здесь указывается фильтр файлов, которые нужно отслеживать (в данном случае все файлы)
+            _watcher.Changed += OnChanged;
+            _watcher.Created += OnChanged;
+            _watcher.Deleted += OnChanged;
+            _watcher.Renamed += OnChanged;
+            _watcher.EnableRaisingEvents = true;
         }
         private void OnChanged(object source, FileSystemEventArgs e)
         {
@@ -681,23 +709,41 @@ namespace ModManager.ViewModel
 
         }
 
-
-
+        public delegate void RedrawingGameList();
+        public delegate void DeleteGame(UIElement element, string nameGame);
         private void AddGameToList(string Name, string Path)
-        {
-            GameInfoList.Add(new GameInfo(Name, Path));
+        {      
+
+            GameInfoList.Add(new GameInfo(Name, Path, DeleteGameFromList));
             StackPanelGameList.Children.Add(GameInfoList[GameInfoList.ToArray().Length - 1].GridLine);
         }
         private void AddGameToList()
         {
-            GameInfoList.Add(new GameInfo());
+            GameInfoList.Add(new GameInfo(DeleteGameFromList));
             StackPanelGameList.Children.Add(GameInfoList[GameInfoList.ToArray().Length - 1].GridLine);
         }
-        private void ClearGameList()
+        private void DeleteGameFromList(UIElement element, string nameGame)
+        {
+            GameInfoList.RemoveAt(StackPanelGameList.Children.IndexOf(element));
+            StackPanelGameList.Children.Remove(element);
+            /*System.Windows.MessageBox.Show("Надпись в стак панели: " + ((element as Grid).Children[0] as System.Windows.Controls.TextBox).Text + "\n" + 
+                "Индекс в списке: " + GameInfoList[0].TextBoxGameName.Text);*/
+        }
+
+        private void RedrawingGameListMethod()
         {
             StackPanelGameList.Children.Clear();
-            GameInfoList.Clear();
+            IniFile ini = new IniFile("../../../Configs/Settings.ini");
+            foreach (var key in ini.GetKeys("TestGameSection")) //Закончил на получении списка ключей из секции в ini файле (Необходимо для загрузки списка игр)
+            {
+                if (!string.IsNullOrEmpty(key))
+                {
+                    string path = ini.Read(key, "TestGameSection");
+                    AddGameToList(key, path);
+                }
+            }
         }
+
         #endregion
     }
 }
