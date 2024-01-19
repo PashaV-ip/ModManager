@@ -4,29 +4,36 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local="clr-namespace:ModManager"
-    xmlns:controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     xmlns:ViewModel="clr-namespace:ModManager.ViewModel" x:Class="ModManager.MainWindow"
     mc:Ignorable="d"
     WindowStyle="None" 
     ResizeMode="CanMinimize"
     WindowState="{Binding StateWindow}"
     WindowStartupLocation="CenterScreen"
-    Title="MainWindow" Height="550" Width="900">
+    Title="MainWindow" Height="550" Width="900"
+    Background="{Binding BackgroundWindow}">
     <Window.DataContext>
         <ViewModel:MainMenuViewModel/>
     </Window.DataContext>
-    <Window.Background>
-        <ImageBrush ImageSource="/Source/Images/BackgroundV1.jpg"/>
-    </Window.Background>
+    <!--<Window.Background>
+        <ImageBrush ImageSource="/Source/Images/Backgrounds/BackgroundV1.jpg"/>
+    </Window.Background>-->
     <Grid>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="60"/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-            <Border Background="#FF101010" Opacity="0.8" MouseDown="Border_MouseDown"/>
+            <Border Background="{Binding ColorPanels}"  Opacity="{Binding OpacityPanels}" MouseDown="Border_MouseDown"/> <!-- Background="#FF101010" -->
             <Image Source="/Source/Images/Logo.png" HorizontalAlignment="Left" RenderOptions.BitmapScalingMode="HighQuality" Margin="5, 5, 0, 5"/>
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Name="btnInfo" Focusable="False"  Template="{DynamicResource ResourceKey=ControlButtons}" Content="" Command="{Binding OpenInfo}">
+                    <Button.Resources>
+                        <ImageSource x:Key="Img">/Source/Images/info.png</ImageSource>
+                    </Button.Resources>
+                </Button>
                 <Button Name="btnOptions" Focusable="False"  Template="{DynamicResource ResourceKey=ControlButtons}" Content="" Command="{Binding OpenOptions}">
                     <Button.Resources>
                         <ImageSource x:Key="Img">/Source/Images/gear.png</ImageSource>
@@ -99,7 +106,7 @@
                         </Style>
                     </Grid.Style>
                     <Border BorderThickness="1, 0, 1, 1" BorderBrush="#FF303031"/>
-                    <Border BorderThickness="0" Background="Black" Opacity="0.6"/>
+                    <Border BorderThickness="0" Background="{Binding ColorPanels}" Opacity="{Binding OpacityPanels}"/>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition/>
@@ -136,9 +143,12 @@
                         <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
-                        <RowDefinition/>
+                        <RowDefinition Height="100"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.ColumnSpan="15" Grid.RowSpan="15" Background="Black" Opacity="0.6" Margin="-10" CornerRadius="15"/>
+                    <!--                                           Background="{Binding ColorPanels}" Opacity="{Binding OpacityPanels}"-->
+                    <Border Grid.ColumnSpan="15" Grid.RowSpan="15" Background="{Binding ColorPanels}" Opacity="{Binding OpacityPanels}" Margin="-10" CornerRadius="15"/>
+                    
+                    
                     <!--<Border Width="60" Height="60" Background="Transparent" BorderThickness="5" CornerRadius="10">
                         <Border.BorderBrush>
                             <LinearGradientBrush>
@@ -157,20 +167,20 @@
                         </Border.BorderBrush>
                         <Image Margin="5" Source="/Source/Images/gear.png" Stretch="Fill"/>
                     </Border>-->
-                    <Button Name="btnImageAssembler" Focusable="False" Template="{DynamicResource ResourceKey=ImageTheButton}" Height="60" Width="60" Content="" Command="{Binding EditImageAssembler}">
+                    <Button Name="btnImageAssembler" IsEnabled="True" Focusable="false" Template="{DynamicResource ResourceKey=ImageTheButton}" Height="60" Width="60" Content="" Command="{Binding EditImageAssembler}">
                         <Button.Resources>
                             <ImageSource x:Key="Img">/Source/Images/gear.png</ImageSource>
                         </Button.Resources>
                     </Button>
 
-                    <TextBox Text="{Binding AssemblerName}" CaretBrush="#FFC7C7C7" IsReadOnly="{Binding CanEditNameAssembler}" BorderThickness="0" Background="Transparent" Foreground="#FFC7C7C7" FontSize="25" HorizontalAlignment="Center" Grid.Column="1" Grid.ColumnSpan="5" Margin="50,15"/>
-                    <ToggleButton Grid.Column="5" IsChecked="{Binding CanEditNameAssemblerSwitch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Name="btnEditNameAssembler" Focusable="true" HorizontalAlignment="Right"  Template="{DynamicResource ResourceKey=SwitchButton}" Margin="0,0,5,0" Height="40" Width="40">
-                        <!--Command="{Binding EditNameAssembler}"-->
-                        <ToggleButton.Resources>
+                    <TextBox Text="{Binding AssemblerName}" CaretBrush="#FFC7C7C7" IsReadOnly="{Binding CanEditNameAssembler}" BorderThickness="0" Background="Transparent" Foreground="#FFC7C7C7" FontSize="30" HorizontalAlignment="Center" Grid.Column="1" Grid.ColumnSpan="5" Margin="50,15"/>
+                    <!--<ToggleButton Grid.Column="5" IsChecked="{Binding CanEditNameAssemblerSwitch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Name="btnEditNameAssembler" Focusable="true" HorizontalAlignment="Right"  Template="{DynamicResource ResourceKey=SwitchButton}" Margin="0,0,5,0" Height="40" Width="40">
+                        --><!--Command="{Binding EditNameAssembler}"-->
+                        <!--<ToggleButton.Resources>
                             <ImageSource x:Key="Img">/Source/Images/pencil.png</ImageSource>
                         </ToggleButton.Resources>
-                    </ToggleButton>
-                    <Border Visibility="{Binding ImportVisibleIndicatorOn}" Grid.Column="15" Height="10" Width="50" CornerRadius="5">
+                    </ToggleButton>-->
+                    <!--<Border Visibility="{Binding ImportVisibleIndicatorOn}" Grid.Column="15" Height="10" Width="50" CornerRadius="5">
                         <Border.Background>
                             <RadialGradientBrush>
                                 <GradientStop Color="#FFC3D4C5" Offset="0.321"/>
@@ -187,50 +197,118 @@
                                 <GradientStop Color="#FFFF9393" Offset="0.53"/>
                             </RadialGradientBrush>
                         </Border.Background>
-                    </Border>
+                    </Border>-->
                     <ScrollViewer PanningDeceleration="1" PanningRatio="0.5" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="15" Grid.RowSpan="3" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Name="StackPanelModList">
-                            <Label FontSize="25" Margin="30,0" Foreground="#FFC7C7C7" Content="Test"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="100"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.ColumnSpan="2" BorderBrush="#FFC7C7C7" BorderThickness="1" CornerRadius="3"/>
+                                <Label FontSize="25" Margin="30,0" Foreground="#FFC7C7C7" Content="Test.jar"/>
+                                <CheckBox HorizontalAlignment="Center" IsChecked="false" Style="{DynamicResource CheckBoxStyle}" Grid.Column="2" VerticalAlignment="Center"/>
+                            </Grid>
+                            
 
                         </StackPanel>
                     </ScrollViewer>
                     <Grid Grid.Row="4" Grid.ColumnSpan="15" Visibility="{Binding ControlAssemblerVisible}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <Button Width="150" Margin="10, 0, 10, 0" Name="btnLoadAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Загрузить" Command="{Binding LoadAssembler}">
+                        <Border Grid.ColumnSpan="15" Grid.RowSpan="15" Background="{Binding ColorPanels}" Opacity="{Binding OpacityPanels}" Margin="-10, 0, -10, -10" CornerRadius="0, 0, 15, 15"/>
+                        <Label FontSize="18" Margin="30,0" Foreground="#FFC7C7C7" Content="Кол-во модов: 1"/>
+                        <Label Grid.Column="1" FontSize="18" Margin="30,0" Foreground="#FFC7C7C7" Content="Вес: 2 Мб"/>
+
+                        <Button Width="150" Grid.Row="1" Margin="10, 0, 10, 0" Name="btnLoadAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Загрузить" Command="{Binding LoadAssembler}">
 
                         </Button>
-                        <Button Width="150" Grid.Column="1" Margin="10, 0, 10, 0" Name="btnUnloadAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Выгрузить" Command="{Binding UnloadAssembler}">
+                        <Button Width="150" Grid.Row="1" Grid.Column="1" Margin="10, 0, 10, 0" Name="btnUnloadAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Настройки" Command="{Binding UnloadAssembler}">
 
                         </Button>
-                        <Button Width="150" Grid.Column="5" Margin="10, 0, 10, 0" Name="btnOptionAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Настройки" Command="{Binding OptionAssembler}">
+                        <Button Width="150" Grid.Row="1" Grid.Column="5" Margin="10, 0, 10, 0" Name="btnOptionAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Удалить" Command="{Binding OptionAssembler}">
 
                         </Button>
                     </Grid>
                     <Grid Grid.Row="4" Grid.ColumnSpan="15" Visibility="{Binding ControlUpdateAssemblerVisible}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <Button Width="150" Margin="10, 0, 10, 0" Name="btnSaveAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Сохранить" Command="{Binding SaveAssemblerOption}">
+                        <Button Width="150" Grid.Row="1" Margin="10, 0, 10, 0" Name="btnSaveAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Сохранить" Command="{Binding SaveAssemblerOption}">
 
                         </Button>
-                        <Button Width="150" Grid.Column="1" Margin="10, 0, 10, 0" Name="btnCancleAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Отменить" Command="{Binding Test}">
+                        <Button Width="150" Grid.Row="1" Grid.Column="1" Margin="10, 0, 10, 0" Name="btnCancleAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Отменить" Command="{Binding Test}">
 
                         </Button>
-                        <Button Width="150"  Grid.Column="5" Margin="10, 0, 10, 0" Name="btnDeleteAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Удалить" Command="{Binding DeleteAssembler}">
+                        <Button Width="150" Grid.Row="1"  Grid.Column="5" Margin="10, 0, 10, 0" Name="btnDeleteAssembler" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Удалить" Command="{Binding DeleteAssembler}">
 
                         </Button>
                         
                     </Grid>
                 </Grid>
+
+
+
+
+
+
+
+
+                <Grid Grid.Column="1" Margin="20" Visibility="{Binding InfoVisible}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.ColumnSpan="15" Grid.RowSpan="15" Background="{Binding ColorPanels}" Opacity="{Binding OpacityPanels}" Margin="-10" CornerRadius="15"/>
+                    <TextBlock Text="Мод менеджер Визирь" Grid.Column="1" Grid.ColumnSpan="5" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFC7C7C7"/>
+                    <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="0" Grid.RowSpan="4" Grid.ColumnSpan="10">
+                        <TextBlock TextAlignment="Justify" Text="Данный мод менеджер позволяет вам удобно оперировать модовыми сборками для ваших любимых игр. Он позволяет вам полностью исключить вероятность потери игрового прогресса из-за запуска сохранения с не правильным набором модов!" TextWrapping="Wrap" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFC7C7C7"/>
+                        <TextBlock Margin="0, 60, 0, 0" Text="Автор: Ваньшев Павел" TextWrapping="Wrap" FontSize="25" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FFC7C7C7"/>
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="Репозиторий проекта: " TextWrapping="Wrap" FontSize="25" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FFC7C7C7"/>
+                            <TextBlock TextDecorations="Baseline" Text="https://github.com/PashaV-ip/ModManager" TextWrapping="Wrap" FontSize="25" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FF6BAFE4"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+
+
+
+
+
+
+
+
+
             </Grid>
             <!--Options Main-->
             <Grid Grid.Row="1" Visibility="{Binding OptionsVisible}">
+                <!--Visibility="{Binding OptionsVisible}"-->
 
                 <Border Background="#FF101010" Opacity="0.6" Width="60" HorizontalAlignment="Left"/>
                 <Border Background="#FF101010" Opacity="0.5"/>
@@ -253,7 +331,25 @@
 
                     <ScrollViewer Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" Margin="0, 50, 0, 0">
                         <StackPanel >
-                            <Grid HorizontalAlignment="Center" Margin="0, 0, 0, 50" Grid.Row="0" Grid.ColumnSpan="15">
+                            <Border BorderThickness="0, 3, 0, 0" CornerRadius="30" Margin="100, 0">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                        <GradientStop Color="#FF6F6F6F"/>
+                                        <GradientStop Color="#FF383838" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                            </Border>
+                            <Label Foreground="#FFC7C7C7" Content="Настройки" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border BorderThickness="0, 3, 0, 0" CornerRadius="30" Margin="100, 0">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                        <GradientStop Color="#FF6F6F6F"/>
+                                        <GradientStop Color="#FF383838" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                            </Border>
+                            
+                            <Grid HorizontalAlignment="Center" Margin="0, 20, 0, 50" Grid.Row="0" Grid.ColumnSpan="15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="200"/>
                                     <ColumnDefinition Width="auto"/>
@@ -267,7 +363,7 @@
                                 </Button>
                             </Grid>
 
-                            <Grid HorizontalAlignment="Center" Margin="0, 0, 0, 50" Grid.Row="1"  Grid.ColumnSpan="15">
+                            <Grid HorizontalAlignment="Center" Visibility="Collapsed" Margin="0, 0, 0, 50" Grid.Row="1"  Grid.ColumnSpan="15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="200"/>
                                     <ColumnDefinition Width="auto"/>
@@ -289,7 +385,7 @@
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Foreground="#FFC7C7C7" Text="Прозрачность панелей: " TextWrapping="Wrap" TextAlignment="Center" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <Slider Style="{DynamicResource ResourceKey=SlidersStyle}"  Value="0" Maximum="100" Minimum="0" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0" Width="400">
+                                <Slider Style="{DynamicResource ResourceKey=SlidersStyle}" TickFrequency="0.1" Value="{Binding OpacityPanels}" Maximum="1" Minimum="0" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0" Width="400">
                                     <Slider.Background>
                                         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                                             <GradientStop Color="#FF1E2531"/>
@@ -298,7 +394,7 @@
                                         </LinearGradientBrush>
                                     </Slider.Background>
                                 </Slider>
-                                <TextBox Grid.Column="2" CaretBrush="#FFC7C7C7" Text="0" TextAlignment="Center" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="10,0,0,0" MinWidth="120" VerticalAlignment="Center" FontSize="20"/>
+                                <TextBox Grid.Column="2" IsReadOnly="True" CaretBrush="#FFC7C7C7" Text="{Binding OpacityPanels}" TextAlignment="Center" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="10,0,0,0" MinWidth="120" VerticalAlignment="Center" FontSize="20"/>
 
                             </Grid>
 
@@ -310,11 +406,15 @@
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
                                 <TextBlock Foreground="#FFC7C7C7" Text="Цвет панелей: " TextWrapping="Wrap" TextAlignment="Center" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <Rectangle Margin="0, 10, 10, 10" Grid.Column="1" Height="20" Width="400" Fill="Aqua"/>
-                                <Button Grid.Column="2" Margin="10, 0, 0, 0" Name="btnChangeColor" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" MinWidth="120" Content="Палитра">
-
-                                </Button>
+                                <xctk:ColorPicker UsingAlphaChannel="False" SelectedColor="{Binding ColorPanels.Color}" Name="ColorPickerForPanels" Width="520" BorderThickness="0" BorderBrush="Transparent" Background="Transparent" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" SelectedColorChanged="ColorPicker_SelectedColorChanged">
+                                    
+                                </xctk:ColorPicker>
+                                
                             </Grid>
 
 
@@ -325,11 +425,12 @@
                                     <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Label Foreground="#FFC7C7C7" Content="Задний фон: " FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <TextBox Grid.Column="1" CaretBrush="#FFC7C7C7" Text="Path" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="0,0,10,0" Width="400" VerticalAlignment="Center" FontSize="20"/>
+                                <TextBox Grid.Column="1" CaretBrush="#FFC7C7C7" Text="{Binding PathToTheBackground}" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="0,0,10,0" Width="400" VerticalAlignment="Center" FontSize="20"/>
 
-                                <Button Grid.Column="2" Margin="10, 0, 0, 0" Name="btnBrowsebackground" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" MinWidth="120" Content="Обзор ...">
+                                <Button Grid.Column="2" Command="{Binding BrowseBackgroundImage}" Margin="10, 0, 0, 0" Name="btnBrowsebackground" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" MinWidth="120" Content="Обзор ...">
 
                                 </Button>
+                                
                             </Grid>
                             <Border BorderThickness="0, 3, 0, 0" CornerRadius="30" Margin="100, 0">
                                 <Border.BorderBrush>
@@ -349,7 +450,7 @@
                                 </Border.BorderBrush>
                             </Border>
                             <StackPanel Name="StackPanelGameList">
-                                <Grid Margin="20, 10, 5, 0">
+                                <!--<Grid Margin="20, 10, 5, 0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="200"/>
                                         <ColumnDefinition Width="*"/>
@@ -376,7 +477,7 @@
                                             </Button.Resources>
                                         </Button>
                                     </StackPanel>
-                                </Grid>
+                                </Grid>-->
                             </StackPanel>
                             <Button Grid.Column="2" Margin="10, 20" Name="btnAddGame" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Command="{Binding AddGame}" Content="Добавить игру">
 
@@ -385,17 +486,120 @@
                     </ScrollViewer>
 
 
-                    <Border Grid.Row="4" Grid.ColumnSpan="15" Background="Black" Opacity="0.6" CornerRadius="0, 0, 20, 20" Margin="3"/>
+                    <Border Grid.Row="4" Grid.ColumnSpan="15" Background="{Binding ColorPanels}" Opacity="{Binding OpacityPanels}" CornerRadius="0, 0, 20, 20" Margin="3"/>
                     <StackPanel Margin="0, 10, 0, 10" HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="15" Orientation="Horizontal">
-                        <Button Width="150" Grid.Row="1" Margin="10, 0, 50, 0" Name="btnOptionSave" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Сохранить" Command="{Binding SaveOptions}">
+                        <Button Width="150" Grid.Row="1" Margin="10, 0, 50, 0" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Сохранить" Command="{Binding SaveOptions}">
 
                         </Button>
-                        <Button Width="150" Grid.Row="1" Margin="50, 0, 10, 0" Name="btnOptionCancle" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Отмена" Command="{Binding CancleOptions}">
+                        <Button Width="150" Grid.Row="1" Margin="50, 0, 10, 0" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Content="Отмена" Command="{Binding CancleOptions}">
+                            
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+
+            <Grid Grid.Row="1" Visibility="{Binding SettingsAssemblerVisible}">
+                <!--Visibility="{Binding SettingsAssemblerVisible}"-->
+                <!--Сделал ещё одно окошко с настройкаи, нужно сделать настройки сборки!!!!-->
+                <Border Background="#FF101010" Opacity="0.6" Width="60" HorizontalAlignment="Left"/>
+                <Border Background="#FF101010" Opacity="0.5"/>
+                <Grid Margin="35,10,35,10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition Height="70"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.RowSpan="10" BorderThickness="2" BorderBrush="#FF303031" Grid.ColumnSpan="10" CornerRadius="20">
+                        <Border Grid.RowSpan="10" BorderThickness="1" BorderBrush="#474748" Grid.ColumnSpan="10" CornerRadius="20"/>
+                        <Border.Background>
+                            
+                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                <GradientStop Color="#FF232D3E"/>
+                                <GradientStop Color="#FF1D222C" Offset="1"/>
+                                <GradientStop Color="#FF1D202C" Offset="0.5"/>
+                            </LinearGradientBrush>
+
+                        </Border.Background>
+                    </Border>
+
+                    <ScrollViewer Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" Margin="0, 50, 0, 0">
+                        <StackPanel>
+                            <Grid HorizontalAlignment="Center" Margin="0, 0, 0, 50" Grid.Row="0"  Grid.ColumnSpan="15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="130"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Foreground="#FFC7C7C7" Content="Название сборки: " FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBox Grid.Column="1" CaretBrush="#FFC7C7C7" Text="{Binding AssemblerNameChange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="0,0,10,0" Width="400" VerticalAlignment="Center" FontSize="20"/>
+                            </Grid>
+
+                            <Grid HorizontalAlignment="Center" Margin="0, 0, 0, 50" Grid.Row="0"  Grid.ColumnSpan="15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="130"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Foreground="#FFC7C7C7" Content="Игра: " FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <ComboBox Style="{DynamicResource ComboBoxStyle}" SelectedValue="{Binding AssemblerGameChange}" ItemsSource="{Binding GameList}" Grid.Column="1" IsReadOnly="True" Padding="5, 5" Margin="0,0,10,0" Width="400" VerticalAlignment="Center" FontSize="20"/>
+                            </Grid>
+                            <Grid HorizontalAlignment="Center" Width="740" Margin="0, 0, 0, 50" Grid.Row="0"  Grid.ColumnSpan="15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Foreground="#FFC7C7C7" Text="Сохранять игровые миры: " TextWrapping="Wrap" TextAlignment="Center" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <StackPanel Visibility="{Binding PathToWorldsInGameVisible}" Grid.Column="1" Orientation="Horizontal">
+                                    <TextBox CaretBrush="#FFC7C7C7" Text="{Binding PathToWorldsInGame, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="0,0,10,0" Width="400" VerticalAlignment="Center" FontSize="20"/>
+                                    <Button Focusable="False" Template="{DynamicResource ResourceKey=SmallImageButton}" Margin="0, 0, 5, 0" Width="30" Height="30">
+                                        <Button.Resources>
+                                            <ImageSource x:Key="Img">/Source/Images/folder.png</ImageSource>
+                                        </Button.Resources>
+                                    </Button>
+                                </StackPanel>
+                                
+                                <CheckBox IsChecked="{Binding SaveWorlds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Foreground="#FFC7C7C7" Style="{DynamicResource CheckBoxStyle}" Grid.Column="2" HorizontalAlignment="Left" Margin="20, 0" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Grid HorizontalAlignment="Center" Width="740" Margin="0, 0, 0, 50" Grid.Row="0"  Grid.ColumnSpan="15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Foreground="#FFC7C7C7" Text="Сохранять файлы конфигурации: " TextWrapping="Wrap" TextAlignment="Center" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                <StackPanel Visibility="{Binding PathToConfigsInGameVisible}" Grid.Column="1" Orientation="Horizontal">
+                                    <TextBox CaretBrush="#FFC7C7C7" Text="{Binding PathToConfigsInGame, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource TextBoxStyle}" Foreground="#FFC7C7C7" Padding="0, 5" Margin="0,0,10,0" Width="400" VerticalAlignment="Center" FontSize="20"/>
+                                    <Button Focusable="False" Template="{DynamicResource ResourceKey=SmallImageButton}" Margin="0, 0, 5, 0" Width="30" Height="30">
+                                        <Button.Resources>
+                                            <ImageSource x:Key="Img">/Source/Images/folder.png</ImageSource>
+                                        </Button.Resources>
+                                    </Button>
+                                </StackPanel>
+                                <CheckBox IsChecked="{Binding SaveConfigs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource CheckBoxStyle}" Grid.Column="2" HorizontalAlignment="Left" Margin="20, 0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                    
+                    
+
+
+                    <Border Grid.Row="4" Grid.ColumnSpan="15" Background="{Binding ColorPanels}" Opacity="{Binding OpacityPanels}" CornerRadius="0, 0, 20, 20" Margin="3"/>
+                    <StackPanel Margin="0, 10, 0, 10" HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="15" Orientation="Horizontal">
+                        <Button Width="150" Grid.Row="1" Margin="10, 0, 50, 0" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Command="{Binding SaveAssemblerOption}" Content="Сохранить">
+
+                        </Button>
+                        <Button Width="150" Grid.Row="1" Margin="50, 0, 10, 0" VerticalAlignment="Center" Focusable="False" Template="{DynamicResource ResourceKey=BrowseButtonInOptions}" Command="{Binding CancleAssemblerOption}" Content="Отмена">
 
                         </Button>
                     </StackPanel>
                 </Grid>
             </Grid>
+
+
         </Grid>
     </Grid>
 </Window>
