@@ -11,6 +11,7 @@ using GalaSoft.MvvmLight.Command;
 using ModManager.ViewModel;
 using System.Windows.Forms;
 using System.IO;
+using System.Reflection;
 
 namespace ModManager.Model
 {
@@ -178,8 +179,12 @@ namespace ModManager.Model
                 Command = new RelayCommand(() =>
                 {
                     IniFile ini = new IniFile("../../../Configs/Settings.ini");
-                    if (ini.KeyExists(TextBoxGameName.Text, "TestGameSection"))
-                        ini.DeleteKey(TextBoxGameName.Text, "TestGameSection");
+                    if (ini.KeyExists(TextBoxGameName.Text, "GameList"))
+                    {
+
+                        ini.DeleteKey(TextBoxGameName.Text, "GameList");
+                    }
+
                     _deleteGame(GridLine, TextBoxGameName.Text);
                 })
             };
@@ -209,7 +214,7 @@ namespace ModManager.Model
                             TextBoxGameName.IsReadOnly = true;
                             TextBoxGamePath.IsReadOnly = true;
                             IniFile ini = new IniFile("../../../Configs/Settings.ini");
-                            ini.Write(TextBoxGameName.Text, TextBoxGamePath.Text, "TestGameSection");
+                            ini.Write(TextBoxGameName.Text, TextBoxGamePath.Text, "GameList");
                             ButtonCheckSaveGame.Resources.Remove("Img");
                             ButtonCheckSaveGame.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/pencil.png", UriKind.Absolute)));
                         }
@@ -326,10 +331,18 @@ namespace ModManager.Model
                 },
                 Command = new RelayCommand(() =>
                 {
-                    IniFile ini = new IniFile("../../../Configs/Settings.ini");
-                    if (ini.KeyExists(TextBoxGameName.Text, "TestGameSection"))
-                        ini.DeleteKey(TextBoxGameName.Text, "TestGameSection");
-                    _deleteGame(GridLine, TextBoxGameName.Text); //Через делегат реализовал функцию удаления игры из ini файла и в StackPanel
+                    DialogResult result = (DialogResult)System.Windows.MessageBox.Show("Если вы удалите данную игру, вы удалите все зависимые от неё сборки!\nХотите продолжить?", "Предупреждение..", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if(result == DialogResult.Yes)
+                    {
+                        IniFile ini = new IniFile("../../../Configs/Settings.ini");
+                        if (ini.KeyExists(TextBoxGameName.Text, "GameList"))
+                        {
+                            Directory.Delete(Path.Combine(ini.Read("PathToTheAssemblersFolder"), TextBoxGameName.Text), true);
+                            ini.DeleteKey(TextBoxGameName.Text, "GameList");
+                        }
+
+                        _deleteGame(GridLine, TextBoxGameName.Text); //Через делегат реализовал функцию удаления игры из ini файла и в StackPanel
+                    }
                 })
             };
             ButtonCheckSaveGame = new System.Windows.Controls.Button

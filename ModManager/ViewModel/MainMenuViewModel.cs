@@ -11,6 +11,8 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
+using System.Windows.Navigation;
 using Xceed.Wpf.Toolkit;
 
 namespace ModManager.ViewModel
@@ -50,8 +52,9 @@ namespace ModManager.ViewModel
         private bool _saveConfigs = false;
         private Visibility _pathToWorldsInGameVisible = Visibility.Collapsed;
         private Visibility _pathToConfigsInGameVisible = Visibility.Collapsed;
-        private string _pathToWorldsInGame = "worldsFolder";
-        private string _pathToConfigsInGame = "configsFolder";
+        private string _pathToWorldsInGame = "";
+        private string _pathToConfigsInGame = "";
+        private string _loadOrUnloadAssemblerText = "Загрузить";
 
         #endregion
 
@@ -76,7 +79,8 @@ namespace ModManager.ViewModel
 
 
 
-
+        private string _coutMods = "Кол-во модов: 0";
+        private string _fileWeight = "Вес: 0 Мб";
         private ObservableCollection<GameInfo> _gameInfoList = new ObservableCollection<GameInfo>();
 
 
@@ -84,6 +88,16 @@ namespace ModManager.ViewModel
 
         #endregion
         #region Свойства
+
+        public string LoadOrUnloadAssemblerText
+        {
+            get => _loadOrUnloadAssemblerText;
+            set
+            {
+                _loadOrUnloadAssemblerText = value;
+                OnPropertyChanged(nameof(LoadOrUnloadAssemblerText));
+            }
+        }
 
         #region Свойства окна настроек сборки
 
@@ -102,6 +116,18 @@ namespace ModManager.ViewModel
             set
             {
                 _assemblerGameChange = value;
+                IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
+                try
+                {
+                    PathToWorldsInGame = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Read("PathToGameWorlds", "Configs");
+                    PathToConfigsInGame = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Read("PathToGameConfigs", "Configs");
+                }
+                catch
+                {
+                    PathToWorldsInGame = "";
+                    PathToConfigsInGame = "";
+                }
+                
                 OnPropertyChanged(nameof(AssemblerGameChange));
             }
         }
@@ -129,7 +155,10 @@ namespace ModManager.ViewModel
             get => _saveWorlds;
             set
             {
-                if (value) PathToWorldsInGameVisible = Visibility.Visible;
+                if (value) 
+                {
+                    PathToWorldsInGameVisible = Visibility.Visible;
+                }
                 else PathToWorldsInGameVisible = Visibility.Collapsed;
                 _saveWorlds = value;
                 OnPropertyChanged(nameof(SaveWorlds));
@@ -140,7 +169,10 @@ namespace ModManager.ViewModel
             get => _saveConfigs;
             set
             {
-                if (value) PathToConfigsInGameVisible = Visibility.Visible;
+                if (value)
+                {
+                    PathToConfigsInGameVisible = Visibility.Visible;
+                }
                 else PathToConfigsInGameVisible = Visibility.Collapsed;
                 _saveConfigs = value;
                 OnPropertyChanged(nameof(SaveConfigs));
@@ -224,6 +256,7 @@ namespace ModManager.ViewModel
                 OnPropertyChanged(nameof(PathToTheBackground));
             }
         }
+        
         public double OpacityPanels
         {
             get => _opacityPanels;
@@ -258,7 +291,25 @@ namespace ModManager.ViewModel
             set
             {
                 _stackPanelModList = value;
-                //OnPropertyChanged(nameof(StackPanelModList)); Не было, решил добавить
+                OnPropertyChanged(nameof(StackPanelModList));
+            }
+        }
+        public string FileWeight
+        {
+            get => _fileWeight;
+            set
+            {
+                _fileWeight = "Вес: " + value + "Мб";
+                OnPropertyChanged(nameof(FileWeight));
+            }
+        }
+        public string CoutMods
+        {
+            get => _coutMods;
+            set
+            {
+                _coutMods = "Кол-во модов: " + value;
+                OnPropertyChanged(nameof(CoutMods));
             }
         }
         public StackPanel StackPanelSlideMenu //Свойство взаимодействующее с полем _stackPanelSlideMenu
@@ -424,6 +475,8 @@ namespace ModManager.ViewModel
                 return new RelayCommand(() => {
                     AssemblerModlistInfoVisible = Visibility.Hidden;
                     InfoVisible = Visibility.Visible;
+                    CancleAssemblerOption.Execute(null);
+                    CancleOptions.Execute(null);
                 });
             }
         }
@@ -434,6 +487,7 @@ namespace ModManager.ViewModel
             get
             {
                 return new RelayCommand(() => {
+                    _newAssembler = false;
                     SettingsAssemblerVisible = Visibility.Hidden;
                 });
             }
@@ -460,13 +514,35 @@ namespace ModManager.ViewModel
                         button.Focus();
                         OpenAssembler.Execute(button.Content);
                     }*/
+
                     SaveAssemblerSettings();
-                    if(AssemblerName != AssemblerNameChange)
-                    {
-                        System.Windows.MessageBox.Show("Имя изменено");
-                    }
+
                     //SettingsAssemblerVisible = Visibility.Hidden;
 
+                });
+            }
+        }
+
+        public ICommand BrowseAssemblerPathToWorldsOrConfigs
+        {
+            get
+            {
+                return new RelayCommand<object>((parameter) =>
+                {
+                    var dialog = new FolderBrowserDialog();
+                    DialogResult result = dialog.ShowDialog();
+                    if (result == System.Windows.Forms.DialogResult.OK)
+                    {
+                        switch ((string)parameter)
+                        {
+                            case "BrowseWorlds":
+                                PathToWorldsInGame = dialog.SelectedPath;
+                                break;
+                            case "BrowseConfigs":
+                                PathToConfigsInGame = dialog.SelectedPath;
+                                break;
+                        }
+                    }
                 });
             }
         }
@@ -488,6 +564,7 @@ namespace ModManager.ViewModel
                     ColorPanels = new SolidColorBrush(GetColorPanels());
                     GameList = GetGameList();
                     ClearGameList();
+                    GetAssemblers();
                 });
             }
         }
@@ -500,7 +577,7 @@ namespace ModManager.ViewModel
                     {
                         GameList = GetGameList();
                         IniFile ini = new IniFile("../../../Configs/Settings.ini");
-                        ini.Write("PathToTheModsFolder", PathToTheModsFolder);
+                        //ini.Write("PathToTheModsFolder", PathToTheModsFolder);
                         ini.Write("ColorPanels", ColorPanels.ToString());
                         ini.Write("OpacityPanels", OpacityPanels.ToString());
                         //System.Windows.MessageBox.Show(ColorPanels.ToString());
@@ -515,8 +592,11 @@ namespace ModManager.ViewModel
                             
                             new FileInfo("../../../Source/Images/Backgrounds/Background.png").Delete();
                             File.Copy(PathToTheBackground, "../../../Source/Images/Backgrounds/Background.png");
+                            //File.Replace("../../../Source/Images/Backgrounds/Background.png", PathToTheBackground, null);
+                            BackgroundWindow = null;
                             BackgroundWindow = new ImageBrush(GetBackground()); //Я исправил ошибку!!!!!!!!!!! "Пишет файл используется - ОПЯТЬ!!!!!!!!!" УРААААААА!!!!!!!!!
                         }
+                        OptionsVisible = Visibility.Hidden;
                     }
                     else
                     {
@@ -555,7 +635,6 @@ namespace ModManager.ViewModel
                 return new RelayCommand(() => {
 
                     var dialog = new OpenFileDialog();
-                    dialog.InitialDirectory = PathToTheAssemblersFolder;
                     dialog.Filter = "PNG (*.png)|*.png"; //"Image files (*.png;*.jpg)|*.png;*.jpg";
                     DialogResult result = dialog.ShowDialog();
                     if (result == System.Windows.Forms.DialogResult.OK && new FileInfo(dialog.FileName).Exists)
@@ -612,12 +691,6 @@ namespace ModManager.ViewModel
             get
             {
                 return new RelayCommand<object>((parameter) => {
-                    // здесь можно использовать информацию о том, какая кнопка вызвала эту команду
-                    /*if (parameter is System.Windows.Controls.Button button)
-                    {
-                        System.Windows.MessageBox.Show($"Команда вызвана с кнопки: {button.Content}");
-                    }*/
-                    //System.Windows.MessageBox.Show(parameter.ToString());
                     InfoVisible = Visibility.Hidden;
                     AssemblerModlistInfoVisible = Visibility.Visible;
                     GetInformationInSelectedAssembler(parameter.ToString());
@@ -661,7 +734,18 @@ namespace ModManager.ViewModel
             }
         }
 
-
+        public ICommand OnOffMods
+        {
+            get
+            {
+                return new RelayCommand<object>((parameter) =>
+                {
+                    IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
+                    System.Windows.Controls.CheckBox checkBox = StackPanelModList.Children.OfType<System.Windows.Controls.Grid>().FirstOrDefault(x => x.Name == "grid_" + parameter.ToString().Split('#')[2]).Children.OfType<System.Windows.Controls.CheckBox>().FirstOrDefault(checkBox => checkBox.Name.ToString() == "checkBox_" + parameter.ToString().Split('#')[2]);
+                    new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), Path.Combine(parameter.ToString().Split('#')[0], Path.Combine("Assets", "Configs.ini")))).Write(parameter.ToString().Split('#')[1], checkBox.IsChecked.ToString(), "Mods");
+                });
+            }
+        }
         
 
         public ICommand CreateAssembler //Нужно добавить бордер, для создания сборки, где нужно выбрать игру и название, а после, чтение модов
@@ -669,34 +753,16 @@ namespace ModManager.ViewModel
             get
             {
                 return new RelayCommand(() => {
+
+                    IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
+                    AssemblerGameChange = "";
+                    AssemblerNameChange = "";
+                    SaveWorlds = false;
+                    SaveConfigs = false; ;
                     SettingsAssemblerVisible = Visibility.Visible;
                     _newAssembler = true;
-                    /*AssemblerModlistInfoVisible= Visibility.Visible;
-                    //AssemblerImageButton.IsEnabled = true;
-                    IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
-                    DirectoryInfo AssemblerDirectory = new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), "Сборка_#" + iniFile.Read("NumberOfAssembler")));
-                    AssemblerDirectory.Create();
-                    iniFile.Write("NumberOfAssembler", (int.Parse(iniFile.Read("NumberOfAssembler")) + 1).ToString());
-                    new DirectoryInfo(Path.Combine(AssemblerDirectory.FullName, "Assets")).Create();
-                    GetAssemblers();
-                    System.Windows.Controls.Button button = StackPanelSlideMenu.Children.OfType<System.Windows.Controls.Button>().LastOrDefault();
-                    button.Focus();
-                    OpenAssembler.Execute(button.Content);
-                    ClearModsList();
-                    foreach (string str in Directory.GetFiles(new IniFile("../../../Configs/Settings.ini").Read("PathToTheModsFolder")))
-                    {
-                        if (new FileInfo(str).Extension == ".jar")
-                            StackPanelModList.Children.Add(new System.Windows.Controls.Label
-                            {
-                                FontSize = 15,
-                                Margin = new Thickness(30, 0, 30, 0),
-                                Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
-                                Content = new FileInfo(str).Name
-                            });
-                    }
-                    _newAssembler = true;
-                    StreamReadDirectory();
-                    ControlAssemblerVisibility = Visibility.Hidden;*/
+                    //PathToWorldsInGame = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Read("PathToGameWorlds", "Configs");
+                    //PathToConfigsInGame = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Read("PathToGameConfigs", "Configs");
 
                 });
             }
@@ -719,7 +785,7 @@ namespace ModManager.ViewModel
                     {
                         IniFile ini = new IniFile("../../../Configs/Settings.ini");
                         AssemblerImageButton.Resources.Remove("Img");
-                        System.Windows.Controls.Button button = StackPanelSlideMenu.Children.OfType<System.Windows.Controls.StackPanel>().FirstOrDefault(x => x.Name == "stackPanel_" + _assemblerGame).Children.OfType<System.Windows.Controls.Button>().FirstOrDefault(button => button.Content.ToString() == AssemblerName);
+                        System.Windows.Controls.Button button = StackPanelSlideMenu.Children.OfType<System.Windows.Controls.StackPanel>().FirstOrDefault(x => x.Name == "stackPanel_" + _assemblerGame.Replace(' ', '_')).Children.OfType<System.Windows.Controls.Button>().FirstOrDefault(button => button.Content.ToString() == AssemblerName);
                         button.Resources.Remove("Img");
                         string path = Path.Combine(ini.Read("PathToTheAssemblersFolder"), Path.Combine(Path.Combine(_assemblerGame, AssemblerName), Path.Combine("Assets", "img.png"))); ;
 
@@ -780,30 +846,101 @@ namespace ModManager.ViewModel
         }
 
         #region Кнопки одной сборки
-        public ICommand LoadAssembler
+        public ICommand LoadOrUnloadAssembler
         {
             get
             {
                 return new RelayCommand(() => {
-                    foreach (string str in Directory.GetFiles(new IniFile("../../../Configs/Settings.ini").Read(AssemblerGame, "TestGameSection")))
+                    IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
+                    IniFile ini = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "Assets", "Configs.ini"));
+                    if (!bool.TryParse(ini.Read("SaveWorlds", "Configs"), out bool worldsSave)) worldsSave = false;
+                    if (!bool.TryParse(ini.Read("SaveConfigs", "Configs"), out bool configsSave)) configsSave = false;
+                    if (LoadOrUnloadAssemblerText == "Загрузить")
                     {
-                        File.Delete(str);                          
+                        LoadOrUnloadAssemblerText = "Выгрузить";
+
+
+
+                        foreach (string str in Directory.GetFiles(iniFile.Read(AssemblerGame, "GameList")))
+                        {
+                            File.Delete(str);
+                        }
+                        foreach (string file in Directory.GetFiles(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "Mods")))
+                        {
+                            if(bool.Parse(ini.Read(new FileInfo(file).Name, "Mods")))
+                            File.Copy(file, Path.Combine(iniFile.Read(AssemblerGame, "GameList"), new FileInfo(file).Name));
+                        }
+
+                        if (worldsSave)
+                        {
+                            foreach (string str in Directory.GetDirectories(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameWorlds", "Configs")))
+                            {
+                                Directory.Delete(str, true);
+                            }
+                            foreach (string str in Directory.GetDirectories(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "GameWorlds")))
+                            {
+                                CopyDirectory(str, Path.Combine(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameWorlds", "Configs"), new DirectoryInfo(str).Name));
+                            }
+                        }
+                        if (configsSave)
+                        {
+                            foreach (string str in Directory.GetFiles(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameConfigs", "Configs")))
+                            {
+                                File.Delete(str);
+                            }
+                            foreach (string str in Directory.GetFiles(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "GameConfigs")))
+                            {
+                                File.Copy(str, Path.Combine(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameConfigs", "Configs"), new FileInfo(str).Name));
+                            }
+                        }
+                        new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Write("LoadAssembler", AssemblerName, "Configs");
                     }
-                    foreach (string file in Directory.GetFiles(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "Mods")))
+                    else
                     {
-                        //System.Windows.MessageBox.Show(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read(AssemblerGame, "TestGameSection"), new FileInfo(file).Name));
-                        File.Copy(file, Path.Combine(new IniFile("../../../Configs/Settings.ini").Read(AssemblerGame, "TestGameSection"), new FileInfo(file).Name));
+                        foreach (string str in Directory.GetFiles(iniFile.Read(AssemblerGame, "GameList")))
+                        {
+                            File.Delete(str);
+                        }
+                        if (worldsSave)
+                        {
+                            foreach (string str in Directory.GetDirectories(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "GameWorlds")))
+                            {
+                                Directory.Delete(str, true);
+                            }
+
+                            foreach (string str in Directory.GetDirectories(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameWorlds", "Configs")))
+                            {
+                                CopyDirectory(str, Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "GameWorlds", new DirectoryInfo(str).Name));
+                                //System.Windows.MessageBox.Show(str);
+                            }
+                            foreach (string str in Directory.GetDirectories(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameWorlds", "Configs")))
+                            {
+                                Directory.Delete(str, true);
+                            }
+                        }
+                        if (configsSave)
+                        {
+                            foreach (string str in Directory.GetFiles(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "GameConfigs")))
+                            {
+                                File.Delete(str);
+                            }
+
+                            foreach (string str in Directory.GetFiles(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameConfigs", "Configs")))
+                            {
+                                File.Copy(str, Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "GameConfigs", new FileInfo(str).Name));
+                                //System.Windows.MessageBox.Show(str);
+                            }
+                            foreach (string str in Directory.GetFiles(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("PathToGameConfigs", "Configs")))
+                            {
+                                File.Delete(str);
+                            }
+                        }
+
+
+                        new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Write("LoadAssembler", "", "Configs");
+                        LoadOrUnloadAssemblerText = "Загрузить";
                     }
-
-                });
-            }
-        }
-        public ICommand UnloadAssembler
-        {
-            get
-            {
-                return new RelayCommand(() => {
-
+                    
                 });
             }
         }
@@ -812,7 +949,16 @@ namespace ModManager.ViewModel
             get
             {
                 return new RelayCommand(() => {
+                    DialogResult result = (DialogResult)System.Windows.MessageBox.Show($"Вы действительно хотите удалить данную сборку ({AssemblerName})?", "Удалить сборку?", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if(result == DialogResult.Yes)
+                    {
+                        IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
 
+                        
+                        Directory.Delete(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName), true);
+                        GetAssemblers();
+                        OpenInfo.Execute(null);
+                    }
                 });
             }
         }
@@ -823,8 +969,15 @@ namespace ModManager.ViewModel
             {
                 return new RelayCommand(() =>
                 {
-                    //ControlAssemblerVisibility = Visibility.Hidden;
-                    //AssemblerImageButton.IsEnabled = true;
+                    IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
+                    _newAssembler = false;
+                    AssemblerGameChange = AssemblerGame;
+                    AssemblerNameChange = AssemblerName;
+                    bool result = false;
+                    if(bool.TryParse(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "Assets", "Configs.ini")).Read("SaveWorlds", "Configs"),out result))
+                        SaveWorlds = result;
+                    if (bool.TryParse(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "Assets", "Configs.ini")).Read("SaveConfigs", "Configs"), out result))
+                        SaveConfigs = result;
                     SettingsAssemblerVisible = Visibility.Visible;
                 });
             }
@@ -842,119 +995,140 @@ namespace ModManager.ViewModel
             StackPanelGameList.Children.Clear();
             GameInfoList.Clear();
         }
+
         private void SaveAssemblerSettings()
         {
-            if (_newAssembler)
+            IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
+            if (AssemblerNameChange == "")
             {
-                IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
-                if(AssemblerNameChange == "" || AssemblerGameChange == "" || new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange)).Exists)
+                System.Windows.MessageBox.Show("Поле \"Название сборки\" не может быть пустым!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            else if (AssemblerGameChange == "")
+            {
+                System.Windows.MessageBox.Show("Вы не выбрали игру!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            else if (_newAssembler && new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange)).Exists)
+            {
+                System.Windows.MessageBox.Show("Сборка модификаций с таким именем уже существует!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange)).Create();
+            if (_saveWorlds)
+            {
+                if (PathToWorldsInGame != "" && new DirectoryInfo(PathToWorldsInGame).Exists)
                 {
-                    System.Windows.MessageBox.Show("Данная сборка уже существует!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
+                    
+                    new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Write("PathToGameWorlds", PathToWorldsInGame, "Configs");
                 }
                 else
                 {
-                    if (_saveWorlds)
-                    {
-                        if(PathToWorldsInGame != "" && new DirectoryInfo(PathToWorldsInGame).Exists)
-                        {
-                            new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Write("PathToGameWorlds", PathToWorldsInGame, "Configs");
-                        }
-                        else
-                        {
-                            SaveWorlds = false;
-                            PathToWorldsInGame = "";
-                            System.Windows.MessageBox.Show("Папка с игровыми мирами не найдена...\nСохранение игровых миров отключено!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
-                    }
+                    SaveWorlds = false;
+                    PathToWorldsInGame = "";
+                    System.Windows.MessageBox.Show("Папка с игровыми мирами не найдена...\nСохранение игровых миров отключено!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
 
-                    if (_saveConfigs)
+            if (_saveConfigs)
+            {
+                if (PathToConfigsInGame != "" && new DirectoryInfo(PathToConfigsInGame).Exists)
+                {
+                    new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Write("PathToGameConfigs", PathToConfigsInGame, "Configs");
+                }
+                else
+                {
+                    SaveConfigs = false;
+                    PathToConfigsInGame = "";
+                    System.Windows.MessageBox.Show("Папка с файлами конфигурации не найдена...\nСохранение файлов конфигурации отключено!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+
+            if (_newAssembler)
+            {
+
+                new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Assets")).Create();
+                new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Mods")).Create();
+                new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "GameWorlds")).Create();
+                new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "GameConfigs")).Create();
+                IniFile ini = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Assets", "Configs.ini"));
+                ini.Write("SaveWorlds", _saveWorlds.ToString(), "Configs");
+                ini.Write("SaveConfigs", _saveConfigs.ToString(), "Configs");
+
+                
+                foreach (string str in Directory.GetFiles(iniFile.Read(AssemblerGameChange, "GameList")))
+                {
+                    File.Copy(str, Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Mods", new FileInfo(str).Name));
+                    ini.Write(new FileInfo(str).Name, true.ToString(), "Mods");
+                }
+                if(_saveWorlds)
+                {
+                    /*System.Windows.MessageBox.Show("PathToTheAssemblersFolder = " + PathToTheAssemblersFolder + "\n" +
+                        "InI_PathToTheAssemblersFolder" + iniFile.Read("PathToTheAssemblersFolder") + "\n" +
+                        "Combine_PathToTheAssemblersFolder" + Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini") + "\n");*/
+                        
+                        //new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Read("PathToGameWorlds", "Configs"));
+                    foreach (string str in Directory.GetDirectories(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Read("PathToGameWorlds", "Configs")))
                     {
-                        if (PathToConfigsInGame != "" && new DirectoryInfo(PathToConfigsInGame).Exists)
-                        {
-                            new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Write("PathToGameConfigs", PathToConfigsInGame, "Configs");
-                        }
-                        else
-                        {
-                            SaveConfigs = false;
-                            PathToConfigsInGame = "";
-                            System.Windows.MessageBox.Show("Папка с игровыми конфигами не найдена...\nСохранение файлов конфигурации отключено!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
+                        CopyDirectory(str, Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "GameWorlds", new DirectoryInfo(str).Name));
+                        //System.Windows.MessageBox.Show(str);
                     }
-                    System.Windows.MessageBox.Show("Папка не найдена и название не пустое");
-                    new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Assets")).Create();
-                    new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Mods")).Create();
-                    new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "GameWorlds")).Create();
-                    new DirectoryInfo(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "GameConfigs")).Create();
-                    IniFile ini = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Assets", "Configs.ini"));
-                    ini.Write("SaveWorlds", _saveWorlds.ToString());
-                    ini.Write("SaveConfigs", _saveConfigs.ToString());
+                }
+                if (_saveConfigs)
+                {
+                    foreach (string str in Directory.GetFiles(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, "Configs.ini")).Read("PathToGameConfigs", "Configs")))
+                    {
+                        File.Copy(str, Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "GameConfigs", new FileInfo(str).Name));
+                    }
                 }
                 
-                
-                
-                
-                
-                //iniFile.Write("NumberOfAssembler", (int.Parse(iniFile.Read("NumberOfAssembler")) + 1).ToString());
-                //new DirectoryInfo(Path.Combine(AssemblerDirectory.FullName, "Assets")).Create();
-                GetAssemblers();
-                //System.Windows.Controls.Button button = StackPanelSlideMenu.Children.OfType<System.Windows.Controls.Button>().LastOrDefault();
-
-                //System.Windows.MessageBox.Show("stackPanel_" + AssemblerNameChange);
 
 
-                //#############################################################################################
-                //#############################################################################################
-                //Временно закрыл ClearModsList с циклом foreach для создания макета
-                //#############################################################################################
-                /*ClearModsList();
-                foreach (string str in Directory.GetFiles(new IniFile("../../../Configs/Settings.ini").Read(AssemblerGameChange, "TestGameSection")))
-                {
-                    File.Copy(str, Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerNameChange, "Mods", new FileInfo(str).Name));
-                    StackPanelModList.Children.Add(new System.Windows.Controls.Label
-                    {
-                        FontSize = 15,
-                        Margin = new Thickness(30, 0, 30, 0),
-                        Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
-                        Content = new FileInfo(str).Name
-                    });
-                }*/
-
-
-
-
-                System.Windows.Controls.Button button = StackPanelSlideMenu.Children.OfType<StackPanel>().FirstOrDefault(x => x.Name == "stackPanel_" + AssemblerGameChange).Children.OfType<System.Windows.Controls.Button>().FirstOrDefault(button => button.Content.ToString() == _assemblerNameChange);
-                button.Focus();
-
-                //OpenAssembler.Execute(button.Content);
-                OpenAssembler.Execute(Path.Combine(AssemblerGameChange, AssemblerNameChange));
-                //ClearModsList();
-                /*foreach (string str in Directory.GetFiles(new IniFile("../../../Configs/Settings.ini").Read("PathToTheModsFolder")))
-                {
-                    StackPanelModList.Children.Add(new System.Windows.Controls.Label
-                    {
-                        FontSize = 15,
-                        Margin = new Thickness(30, 0, 30, 0),
-                        Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
-                        Content = new FileInfo(str).Name
-                    });
-                }*/
-                //_newAssembler = true;
-                //StreamReadDirectory();
-                //ControlAssemblerVisibility = Visibility.Hidden;
                 _newAssembler = false;
             }
             else
             {
-                //###########################################################
-                //###########################################################
-                //###########################################################
-                //              Сделать сохранение настроек сборки
-                //              Если это не новая сборка
-                //###########################################################
-                //###########################################################
-                //###########################################################
+                if (AssemblerName != AssemblerNameChange)
+                {
+                    if(Directory.Exists(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName)) && !Directory.Exists(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerNameChange)))
+                    {
+                        Directory.Move(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName), Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerNameChange)); // Переименовываем папку
+                        AssemblerName = AssemblerNameChange;
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show("Сборка с таким именем уже существует!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
+                        
+                        AssemblerNameChange = AssemblerName;
+                    }
+                }
+
+                IniFile ini = new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName, "Assets", "Configs.ini"));
+                ini.Write("SaveWorlds", _saveWorlds.ToString(), "Configs");
+                ini.Write("SaveConfigs", _saveConfigs.ToString(), "Configs");
+
+                if (AssemblerGame != AssemblerGameChange)
+                {
+                    if (Directory.Exists(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName)) && !Directory.Exists(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerName)))
+                    {
+                        Directory.Move(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, AssemblerName), Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGameChange, AssemblerName)); // Переименовываем папку
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show("Данная сборка уже существует в этой игре!", "Ошибка..", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                        AssemblerGameChange = AssemblerGame;
+                    }
+                }
+
+
             }
+            GetAssemblers();
+            System.Windows.Controls.Button button = StackPanelSlideMenu.Children.OfType<StackPanel>().FirstOrDefault(x => x.Name == "stackPanel_" + AssemblerGameChange.Replace(' ', '_')).Children.OfType<System.Windows.Controls.Button>().FirstOrDefault(button => button.Content.ToString() == _assemblerNameChange);
+            button.Focus();
+            OpenAssembler.Execute(Path.Combine(AssemblerGameChange, AssemblerNameChange));
+            _newAssembler = false;
+            SettingsAssemblerVisible = Visibility.Hidden;
         }
 
         public void GetAssemblers()
@@ -972,71 +1146,14 @@ namespace ModManager.ViewModel
             {
                 return;
             }
-            #region oldVersionForeach
-            /*foreach (string str in Directory.GetDirectories(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder")))
-            {
-                
-                DirectoryInfo directory = new DirectoryInfo(str);
-                System.Windows.Controls.Button button = new System.Windows.Controls.Button
-                {
-                    Template = (ControlTemplate)System.Windows.Application.Current.Resources["SlideMenuButton"],
-                    Content = directory.Name,
-                    Command = OpenAssembler,
-                    CommandParameter = directory.Name,
-                    //Resources = {
-                    //    { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute))},
-                    //}
-                };
-                if (File.Exists(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(directory.Name, Path.Combine("Assets", "img.png")))))
-                {
-                    button.Resources.Remove("Img");
-                    button.Resources.Add("Img", new BitmapImage(new Uri(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(directory.Name, Path.Combine("Assets", "img.png"))), UriKind.Absolute)));
-                }
-                else
-                {
-                    button.Resources.Remove("Img");
-                    button.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute)));
-                }
-                StackPanelSlideMenu.Children.Add(button);
-            }*/
-            #endregion
-            /*DirectoryInfo directoryWithInfo = new DirectoryInfo(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"));
-            foreach (var str in directoryWithInfo.GetDirectories().OrderBy(d => d.CreationTime))
-            {
-
-                DirectoryInfo directory = str;
-                System.Windows.Controls.Button button = new System.Windows.Controls.Button
-                {
-                    Template = (ControlTemplate)System.Windows.Application.Current.Resources["SlideMenuButton"],
-                    Content = directory.Name,
-                    Command = OpenAssembler,
-                    CommandParameter = directory.Name,
-                    //Resources = {
-                    //    { "Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute))},
-                    //}
-                };
-                if (File.Exists(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(directory.Name, Path.Combine("Assets", "img.png")))))
-                {
-                    button.Resources.Remove("Img");
-                    button.Resources.Add("Img", new BitmapImage(new Uri(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(directory.Name, Path.Combine("Assets", "img.png"))), UriKind.Absolute)));
-                }
-                else
-                {
-                    button.Resources.Remove("Img");
-                    button.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute)));
-                }
-                StackPanelSlideMenu.Children.Add(button);
-            }*/
-
-
             DirectoryInfo directoryWithInfo = new DirectoryInfo(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"));
             foreach (var str in directoryWithInfo.GetDirectories().OrderBy(d => d.CreationTime))
             {
-                if(new IniFile("../../../Configs/Settings.ini").KeyExists(str.Name, "TestGameSection"))
+                if(new IniFile("../../../Configs/Settings.ini").KeyExists(str.Name, "GameList"))
                 {
                     System.Windows.Controls.StackPanel stackPanel = new System.Windows.Controls.StackPanel
                     {
-                        Name = "stackPanel_" + str.Name
+                        Name = "stackPanel_" + str.Name.Replace(' ', '_')
                     };
                     System.Windows.Controls.TextBlock textBlock = new System.Windows.Controls.TextBlock
                     {
@@ -1048,12 +1165,7 @@ namespace ModManager.ViewModel
                         Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7")
                         
                     };
-                    stackPanel.Children.Add(textBlock);//Сделал что бы сборки разделялись не только лейблом, но и стак панелью с именем папки и припиской "stackPanel_"
-                                                       //Сделано для динамичного добавления новой сборки в нужною категорию, без необходимости перерисовывать список модов
-                                                       //Так же скорее всего придётся много где переписать логику, так как можно использовать FindName для поика элемента
-                                                       //по имени!!!
-                                                       //____________________________________________________________________________________________________________________
-                    //StackPanelSlideMenu.Children.Add(textBlock);
+                    stackPanel.Children.Add(textBlock);
                     foreach (var gameDirectWithAssemblers in str.GetDirectories().OrderBy(d => d.CreationTime))
                     {
                         System.Windows.Controls.Button button = new System.Windows.Controls.Button
@@ -1062,12 +1174,10 @@ namespace ModManager.ViewModel
                             Name = gameDirectWithAssemblers.Name,
                             Content = gameDirectWithAssemblers.Name,
                             Command = OpenAssembler,
-                            CommandParameter = Path.Combine(str.Name, gameDirectWithAssemblers.Name), //Было просто gameDirectWithAssemblers.Name
+                            CommandParameter = Path.Combine(str.Name, gameDirectWithAssemblers.Name),
                         };
                         if (File.Exists(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(Path.Combine(str.Name, gameDirectWithAssemblers.Name), Path.Combine("Assets", "img.png")))))
                         {
-
-                            //-----
 
                             BitmapImage image = new BitmapImage();
                             image.BeginInit();
@@ -1076,18 +1186,14 @@ namespace ModManager.ViewModel
                             image.UriSource = new Uri(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(Path.Combine(str.Name, gameDirectWithAssemblers.Name), Path.Combine("Assets", "img.png"))), UriKind.Absolute);
                             image.EndInit();
 
-                            //------
-
                             button.Resources.Remove("Img");
                             button.Resources.Add("Img", image);
                         }
                         else
                         {
-                            //System.Windows.MessageBox.Show(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(Path.Combine(str.Name, gameDirectWithAssemblers.Name), Path.Combine("Assets", "img.png"))));
                             button.Resources.Remove("Img");
                             button.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute)));
                         }
-                        //StackPanelSlideMenu.Children.Add(button);
                         stackPanel.Children.Add(button);
                     }
                     StackPanelSlideMenu.Children.Add(stackPanel);
@@ -1096,24 +1202,20 @@ namespace ModManager.ViewModel
             }
 
         }
-        public void GetInformationInSelectedAssembler(string? assembler)
+        public void GetInformationInSelectedAssembler(string assembler)
         {
-            if (File.Exists(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(assembler, Path.Combine("Assets", "img.png")))))
+            IniFile iniFile = new IniFile("../../../Configs/Settings.ini");
+            
+            if (File.Exists(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), Path.Combine(assembler, Path.Combine("Assets", "img.png")))))
             {
-                //-----
-
                 BitmapImage image = new BitmapImage();
                 image.BeginInit();
                 image.CacheOption = BitmapCacheOption.OnLoad;
                 image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                image.UriSource = new Uri(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(assembler, Path.Combine("Assets", "img.png"))), UriKind.Absolute);
+                image.UriSource = new Uri(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), Path.Combine(assembler, Path.Combine("Assets", "img.png"))), UriKind.Absolute);
                 image.EndInit();
 
-                //------
-
-
                 AssemblerImageButton.Resources.Remove("Img");
-                //AssemblerImageButton.Resources.Add("Img", new BitmapImage(new Uri(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), Path.Combine(assembler, Path.Combine("Assets", "img.png"))), UriKind.Absolute)));
                 AssemblerImageButton.Resources.Add("Img", image);
             }
             else 
@@ -1121,76 +1223,96 @@ namespace ModManager.ViewModel
                 AssemblerImageButton.Resources.Remove("Img");
                 AssemblerImageButton.Resources.Add("Img", new BitmapImage(new Uri("pack://application:,,,/Source/Images/img.png", UriKind.Absolute))); 
             }
-            
 
-            AssemblerName = assembler.Split('\\').Last(); //assembler теперь содержит в пути Название игры, к которой относится сборка из-за чего при выборе сборки там перед названием казано
-                                                          //название игры, нужно исправить!!!!
+            AssemblerName = assembler.Split('\\').Last();
             _assemblerGame = assembler.Split('\\').First();
-
-
-            //System.Windows.MessageBox.Show(_assemblerGame);
-
-            //#############################################################################################
-            //#############################################################################################
-            //Временно закрыл ClearModsList с циклом foreach для создания макета
-            //#############################################################################################
-            /*if (StackPanelModList.Children.Count > 0)
+            if (new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), AssemblerGame, "Configs.ini")).Read("LoadAssembler", "Configs") == AssemblerName)
+            {
+                LoadOrUnloadAssemblerText = "Выгрузить";
+            }
+            else
+            {
+                LoadOrUnloadAssemblerText = "Загрузить";
+            }
+            if (StackPanelModList.Children.Count > 0)
             {
                 StackPanelModList.Children.Clear();
             }
-            foreach (string str in Directory.GetFiles(Path.Combine(new IniFile("../../../Configs/Settings.ini").Read("PathToTheAssemblersFolder"), assembler, "Mods")))
-            {
-                //if(new FileInfo(str).Extension == ".jar")
-                StackPanelModList.Children.Add(new System.Windows.Controls.Label
+            double fileWeight = 0;
+            int coutMods = 0;
+            foreach (string str in Directory.GetFiles(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), assembler, "Mods")))
+            { 
+                coutMods++;  
+                bool isChecked;
+                if (!bool.TryParse(new IniFile(Path.Combine(iniFile.Read("PathToTheAssemblersFolder"), Path.Combine(assembler, Path.Combine("Assets", "Configs.ini")))).Read(new FileInfo(str).Name, "Mods"), out isChecked))
+                    isChecked = false;
+                fileWeight += Math.Ceiling((double)new FileInfo(str).Length);
+                Grid gridLine = new Grid
                 {
-                    //FontSize = "25" Margin = "30,0" Foreground = "#FFC7C7C7" Content = "Test"
+                    Name = "grid_" + coutMods
+                };
+                gridLine.ColumnDefinitions.Add(new ColumnDefinition
+                {
+                    Width = new GridLength(50)
+                });
+                gridLine.ColumnDefinitions.Add(new ColumnDefinition());
+                gridLine.ColumnDefinitions.Add(new ColumnDefinition
+                {
+                    Width = new GridLength(100)
+                });
+                System.Windows.Controls.Label labelNumberMod = new System.Windows.Controls.Label
+                {
                     FontSize = 15,
-                    Margin = new Thickness(30, 0, 30, 0),
+                    Margin = new Thickness(0, 0, 0, 0),
+                    Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
+                    Content = coutMods.ToString()
+                };
+                System.Windows.Controls.Label labelNameMod = new System.Windows.Controls.Label
+                {
+                    FontSize = 15,
+                    Margin = new Thickness(0, 0, 30, 0),
                     Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
                     Content = new FileInfo(str).Name
-                });
-            }*/
-
-        }
-        private void StreamReadDirectory()
-        {
-            /*_watcher.Path = new IniFile("../../../Configs/Settings.ini").Read("PathToTheModsFolder");
-
-            _watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            _watcher.Filter = "*.*"; // Здесь указывается фильтр файлов, которые нужно отслеживать (в данном случае все файлы)
-            _watcher.Changed += OnChanged;
-            _watcher.Created += OnChanged;
-            _watcher.Deleted += OnChanged;
-            _watcher.Renamed += OnChanged;
-            _watcher.EnableRaisingEvents = true;*/
-        }
-        private void OnChanged(object source, FileSystemEventArgs e)
-        {
-            // Здесь можно написать код для реагирования на изменения в папке
-            /*System.Windows.Application.Current.Dispatcher.Invoke(() => 
-            {
-                ClearModsList();
-                foreach (string str in Directory.GetFiles(new IniFile("../../../Configs/Settings.ini").Read("PathToTheModsFolder")))
+                };
+                System.Windows.Controls.Border border = new System.Windows.Controls.Border
                 {
-                    if (new FileInfo(str).Extension == ".jar")
-                        StackPanelModList.Children.Add(new System.Windows.Controls.Label
-                        {
-                            FontSize = 15,
-                            Margin = new Thickness(30, 0, 30, 0),
-                            Foreground = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
-                            Content = new FileInfo(str).Name
-                        });
-                }
-            });*/
+                    BorderBrush = (System.Windows.Media.Brush)new BrushConverter().ConvertFrom("#FFC7C7C7"),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(3)
+                };
+                System.Windows.Controls.CheckBox checkbox = new System.Windows.Controls.CheckBox
+                {
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    IsChecked = isChecked,
+                    Style = (Style)System.Windows.Application.Current.Resources["CheckBoxStyle"],
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Name = "checkBox_" + coutMods,
+                    Command = OnOffMods
+                };
+                checkbox.CommandParameter = assembler + "#" + new FileInfo(str).Name + "#" + coutMods;
+                Grid.SetColumn(labelNumberMod, 0);
+                Grid.SetColumn(labelNameMod, 1);
+                Grid.SetColumnSpan(border, 3);
+                Grid.SetColumn(checkbox, 2);
+                gridLine.Children.Add(border);
+                gridLine.Children.Add(labelNumberMod);
+                gridLine.Children.Add(labelNameMod);
+                gridLine.Children.Add(checkbox);
+
+
+                StackPanelModList.Children.Add(gridLine);
+            }
+            FileWeight = Math.Ceiling((fileWeight/(1024*1024))).ToString();
+            CoutMods = StackPanelModList.Children.Count.ToString();
         }
 
-        private void CreateMainSettingsINI()
+        private static void CreateMainSettingsINI()
         {
-            /*IniFile ini = new IniFile("../../../Configs/Settings.ini");
-            ini.Write("PathToTheModsFolder", "");
+            IniFile ini = new IniFile("../../../Configs/Settings.ini");
             ini.Write("PathToTheAssemblersFolder", "");
-            ini.Write("NumberOfAssembler", "1");
-            ini.Write("SelectedAssembler", "");*/
+            ini.Write("ColorPanels", "#FF000000");
+            ini.Write("OpacityPanels", "0,5");
+
 
         }
         private void AddGameToList(string Name, string Path)
@@ -1207,20 +1329,18 @@ namespace ModManager.ViewModel
         {
             GameInfoList.RemoveAt(StackPanelGameList.Children.IndexOf(element));
             StackPanelGameList.Children.Remove(element);
-            /*System.Windows.MessageBox.Show("Надпись в стак панели: " + ((element as Grid).Children[0] as System.Windows.Controls.TextBox).Text + "\n" + 
-                "Индекс в списке: " + GameInfoList[0].TextBoxGameName.Text);*/
         }
 
         private void RedrawingGameListMethod()
         {
             StackPanelGameList.Children.Clear();
             IniFile ini = new IniFile("../../../Configs/Settings.ini");
-            foreach (var key in ini.GetKeys("TestGameSection")) //Закончил на получении списка ключей из секции в ini файле (Необходимо для загрузки списка игр)
+            foreach (var key in ini.GetKeys("GameList")) //Закончил на получении списка ключей из секции в ini файле (Необходимо для загрузки списка игр)
             {
                 if (!string.IsNullOrEmpty(key))
                 {
                     GameList.Add(key);
-                    string path = ini.Read(key, "TestGameSection");
+                    string path = ini.Read(key, "GameList");
                     AddGameToList(key, path);
                 }
             }
@@ -1228,9 +1348,10 @@ namespace ModManager.ViewModel
 
         private static ObservableCollection<string> GetGameList()
         {
+
             ObservableCollection<string> gameList = new ObservableCollection<string>();
             IniFile ini = new IniFile("../../../Configs/Settings.ini");
-            foreach (var key in ini.GetKeys("TestGameSection")) //Закончил на получении списка ключей из секции в ini файле (Необходимо для загрузки списка игр)
+            foreach (var key in ini.GetKeys("GameList")) //Закончил на получении списка ключей из секции в ini файле (Необходимо для загрузки списка игр)
             {
                 if (!string.IsNullOrEmpty(key))
                 {
@@ -1249,7 +1370,7 @@ namespace ModManager.ViewModel
             image.CacheOption = BitmapCacheOption.OnLoad;
             image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
             //image.UriSource = new Uri("../../../Source/Images/Backgrounds/Background.png", UriKind.Relative);
-            image.UriSource = new Uri("pack://application:,,,/Source/Images/Backgrounds/Background.png", UriKind.Absolute);
+            image.UriSource = new Uri("../../../Source/Images/Backgrounds/Background.png", UriKind.Relative);
             image.EndInit();
 
             return image;
@@ -1258,12 +1379,42 @@ namespace ModManager.ViewModel
 
         private static double GetOpacityPanels()
         {
+            if (!File.Exists("../../../Configs/Settings.ini"))
+            {
+                IniFile ini = new IniFile("../../../Configs/Settings.ini");
+                CreateMainSettingsINI();
+            }
             return double.Parse(new IniFile("../../../Configs/Settings.ini").Read("OpacityPanels").Replace('.', ','));
         }
 
         private static Color GetColorPanels()
         {
             return (Color)ColorConverter.ConvertFromString(new IniFile("../../../Configs/Settings.ini").Read("ColorPanels"));
+        }
+
+        public static void CopyDirectory(string sourceDirName, string destDirName)
+        {
+            // Создаем новую директорию
+            Directory.CreateDirectory(destDirName);
+
+            // Получаем список файлов и поддиректорий в исходной директории
+            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+            FileInfo[] files = dir.GetFiles();
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            // Копируем файлы
+            foreach (FileInfo file in files)
+            {
+                string tempPath = Path.Combine(destDirName, file.Name);
+                file.CopyTo(tempPath, false);
+            }
+
+            // Копируем поддиректории
+            foreach (DirectoryInfo subdir in dirs)
+            {
+                string tempPath = Path.Combine(destDirName, subdir.Name);
+                CopyDirectory(subdir.FullName, tempPath);
+            }
         }
 
         #endregion
